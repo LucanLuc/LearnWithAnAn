@@ -48,9 +48,9 @@ public class Homepage {
 		
 		
 		
-		JButton deleteBtn = new JButton("Delete word"); 
-		Style.styleButton(deleteBtn);
-		deleteBtn.addActionListener(e-> {
+		JButton dictionaryBtn = new JButton("My Dictionary"); 
+		Style.styleButton(dictionaryBtn);
+		dictionaryBtn.addActionListener(e-> {
 			new deleteWord(service);
 			frame.dispose(); 
 			System.out.println("deleteButton chosen"); 
@@ -63,7 +63,7 @@ public class Homepage {
 		panel.add(Box.createRigidArea(new Dimension(0,20)));
 		panel.add(reviewBtn);
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
-		panel.add(deleteBtn); 
+		panel.add(dictionaryBtn); 
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(Box.createVerticalGlue()); 
 		

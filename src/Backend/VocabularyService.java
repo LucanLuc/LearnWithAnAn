@@ -18,7 +18,7 @@ public class VocabularyService {
 	}
 	
 	public Word searchWord(String word) {
-		return dictionary.getWord(word); 
+		return dictionary.searchWord(word); 
 	}
 	
 	public void deleteWord(Word word) {

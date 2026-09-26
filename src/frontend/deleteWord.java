@@ -17,6 +17,7 @@ import Backend.Word;
 public class deleteWord {
 
     private VocabularyService service;
+    private Word selectedWord; 
 
     public deleteWord(VocabularyService service) {
 
@@ -37,14 +38,38 @@ public class deleteWord {
 
         JPanel wordPanel = new JPanel();
         wordPanel.setLayout(new BoxLayout(wordPanel, BoxLayout.Y_AXIS));
-
+        
+        JTextField searchField = new JTextField(); 
+		JButton searchBtn = new JButton("Search"); 
+		Style.styleButton(searchBtn); 
+		
+		JLabel searchResult = new JLabel("");
+		
+		searchBtn.addActionListener(e -> {
+			String word = searchField.getText().trim(); 
+			selectedWord = service.searchWord(word); 
+			
+			if (selectedWord != null) {
+				searchResult.setText(selectedWord.getWord() + " : " + selectedWord.getDefinition()); 
+			} else {
+				searchResult.setText("Word not found."); 
+			}
+		});
+		mainPanel.add(searchField); 
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        
+        mainPanel.add(searchBtn); 
+        mainPanel.add(Box.createRigidArea(new Dimension(0,10))); 
+        mainPanel.add(searchResult); 
+		
+		
         for (Word word : service.getAllWords()) {
 
             JPanel row = new JPanel(new BorderLayout(10, 0));
 
             JTextField wordField = new JTextField(word.getWord());
             JTextField definitionField = new JTextField(word.getDefinition());
-
+            
             JLabel dateLabel = new JLabel(
                 word.getDateAdded().toLocalDate().toString()
             );
@@ -113,7 +138,8 @@ public class deleteWord {
             new Homepage();
             frame.dispose();
         });
-
+    
+        
         mainPanel.add(returnButton);
         mainPanel.add(Box.createVerticalGlue());
 

@@ -12,7 +12,15 @@ public class Dictionary {
 		words = repository.loadWords(); 
 	}
 	
-	
+	public Word searchWord(String word) {
+		for (Word w : words) {
+			if (w.getWord().equalsIgnoreCase(word)) {
+				return w;
+			}
+		}
+		
+		return null; 
+	}
 	public void addWord(Word word) {
 		words.add(word);
 		repository.saveWord(word);
