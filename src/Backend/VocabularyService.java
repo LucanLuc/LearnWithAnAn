@@ -12,14 +12,15 @@ public class VocabularyService {
 		review = new Review(dictionary); 
 	}
 	
-	public void addWord(String word, String definition) {
-		Word newWord = new Word(word, definition, LocalDateTime.now()); 
+	public void addWord(String word, String definition, int correctCount, int wrongCount) {
+		Word newWord = new Word(word, definition, LocalDateTime.now(), correctCount, wrongCount); 
 		dictionary.addWord(newWord);
 	}
 	
 	public Word searchWord(String word) {
 		return dictionary.searchWord(word); 
 	}
+	
 	
 	public void deleteWord(Word word) {
 		dictionary.deleteWord(word);
@@ -67,7 +68,43 @@ public class VocabularyService {
 	public ReviewSummary getReviewSummary() {
 	    return review.getSummary();
 	}
+	public Word getCurrentReviewWord() {
+	    return review.getCurrentWord();
+	}
 	
+	//for stats
+	
+		public int getTotalCorrect() {
+			int total =0; 
+			for (Word word : dictionary.getWords()) {
+				total += word.getCorrectCount();
+			}
+			return total; 
+		}
+		
+		public int getTotalIncorrect() {
+			int total =0; 
+			for (Word word : dictionary.getWords()) {
+				total += word.getIncorrectCount(); 
+			}
+			
+			return total; 
+		}
+		
+		public double getAccuracy() {
+			int total = getTotalReviews();
+			
+			if (total ==0) {
+				return 0.0;
+			}
+			
+			return (double) getTotalCorrect() / total *100; 
+		}
+		
+		public int getTotalReviews() {
+			return getTotalCorrect() + getTotalIncorrect(); 
+		}
+		
 }
 
 

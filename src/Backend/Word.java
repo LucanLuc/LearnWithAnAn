@@ -7,12 +7,33 @@ public class Word {
 	private String definition; 
 	private Character difficulty; 
 	private LocalDateTime dateAdded; 
-
 	
-	public Word (String word, String definition, LocalDateTime time) {
+	//stats fields
+	private int correctCount; 
+	private int wrongCount;
+
+	public void incrementCorrect() {
+		correctCount++; 
+	}
+	
+	public void incrementWrong() {
+		wrongCount++; 
+	}
+	
+	public int getIncorrectCount() {
+		return wrongCount; 
+	}
+	
+	public int getCorrectCount() {
+		return correctCount; 
+	}
+	
+	public Word (String word, String definition, LocalDateTime time, int correctCount, int wrongCount) {
 		this.word = word; 
 		this.definition = definition; 
 		this.dateAdded = time; 
+		this.correctCount= correctCount; 
+		this.wrongCount = wrongCount; 
 	}
 	public void setWord(String word) {
 		this.word = word; 

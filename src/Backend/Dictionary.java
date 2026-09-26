@@ -21,6 +21,11 @@ public class Dictionary {
 		
 		return null; 
 	}
+	
+	public void updateReviewStats(Word word) {
+		repository.updateReviewStats(word);
+	}
+	
 	public void addWord(Word word) {
 		words.add(word);
 		repository.saveWord(word);

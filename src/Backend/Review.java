@@ -11,7 +11,6 @@ public class Review {
     private Random random;
 
     private Word currentWord;
-    private Word previousWord; 
     private int numOfCorrect;
     private int numOfIncorrect;
     private List<String> currentChoices;
@@ -109,9 +108,13 @@ public class Review {
 
         if (correct) {
             numOfCorrect++;
+            currentWord.incrementCorrect(); 
         } else {
             numOfIncorrect++;
+            currentWord.incrementWrong(); 
         }
+        
+        dictionary.updateReviewStats(currentWord);
 
         return new ReviewResult(
             correct,
@@ -130,7 +133,7 @@ public class Review {
     public int getNumOfCorrect() {
         return numOfCorrect;
     }
-    private Word getCurrentWord() {
+    public Word getCurrentWord() {
     	return currentWord; 
     }
     
