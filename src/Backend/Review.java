@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Map; 
 
 public class Review {
 
@@ -14,6 +15,7 @@ public class Review {
     private int numOfCorrect;
     private int numOfIncorrect;
     private List<String> currentChoices;
+    private IntelligentWordSelector wordSelector; 
 
     public Review(Dictionary dictionary) {
 
@@ -137,9 +139,9 @@ public class Review {
         return currentWord;
     }
 
-    public Word nextQuestion() {
+    public Word nextQuestion(ReviewHistory history) {
 
-        getRandomWord();
+        getIntelligentWord(history);
 
         if (currentWord != null) {
             currentChoices = getChoices(currentWord);
@@ -169,5 +171,37 @@ public class Review {
             numOfCorrect,
             numOfIncorrect
         );
+    }
+    public Word getIntelligentWord(ReviewHistory history) {
+
+        List<Word> words = dictionary.getWords();
+
+        if (words.isEmpty()) {
+            currentWord = null;
+            return null;
+        }
+
+        IntelligentWordSelector selector =
+            new IntelligentWordSelector();
+
+        LearningStatsService statsService =
+            new LearningStatsService();
+
+        Map<Word, WordLearningStats> stats =
+            statsService.calculateStats(
+                words,
+                history
+            );
+
+        Word nextWord =
+            selector.chooseWord(
+                words,
+                stats,
+                currentWord
+            );
+
+        currentWord = nextWord;
+
+        return currentWord;
     }
 }

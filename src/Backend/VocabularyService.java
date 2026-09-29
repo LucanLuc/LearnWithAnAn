@@ -1,25 +1,47 @@
 package Backend;
 
 import java.time.LocalDateTime;
-import java.util.List; 
+import java.util.List;
+import java.util.Map; 
 
 public class VocabularyService {
 	private Dictionary dictionary;
 	private Review review; 
 	private ReviewHistory reviewHistory; 
 	private ReviewHistoryRepository reviewHistoryRepository; 
+	private LearningStatsService learningStatsService; 
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
 		review = new Review(dictionary);
 		
+		learningStatsService = new LearningStatsService(); 
 		reviewHistory = new ReviewHistory(); 
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
+		
+		List<ReviewRecord> savedReviews = reviewHistoryRepository.loadReviews(dictionary.getWords()); 
+	
+		for (ReviewRecord record : savedReviews) {
+			reviewHistory.addResult(record);
+		}
 	}
 	
-	public void addWord(String word, String definition, int correctCount, int wrongCount) {
-		Word newWord = new Word(word, definition, LocalDateTime.now(), correctCount, wrongCount); 
-		dictionary.addWord(newWord);
+	public Map<Word, WordLearningStats> getLearningStats() {
+		return learningStatsService.calculateStats(dictionary.getWords(), reviewHistory); 
+	}
+	
+
+	
+	public void addWord(String word, String definition) {
+	    Word newWord = new Word(
+	        word,
+	        definition,
+	        LocalDateTime.now(),
+	        0,
+	        0
+	    );
+
+	    dictionary.addWord(newWord);
 	}
 	
 	public Word searchWord(String word) {
@@ -50,8 +72,9 @@ public class VocabularyService {
 		review.startReview(); 
 	}
 	public Word getNextReviewWord() {
-		return review.nextQuestion(); 
+	    return review.nextQuestion(reviewHistory);
 	}
+	
 	public List<String> getReviewChoices() {
 	    return review.getCurrentChoices();
 	}
@@ -115,6 +138,10 @@ public class VocabularyService {
 		
 		public int getTotalReviews() {
 			return getTotalCorrect() + getTotalIncorrect(); 
+		}
+		
+		public ReviewHistory getReviewHistory() {
+			return reviewHistory; 
 		}
 		
 }
