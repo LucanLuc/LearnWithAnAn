@@ -23,7 +23,6 @@ public class reviewPage {
     private VocabularyService service;
 
     public reviewPage(VocabularyService service) {
-
         this.service = service;
 
         // Start a new review session
@@ -253,6 +252,7 @@ public class reviewPage {
 
         ReviewResult result =
             service.answerReview(selectedAnswer);
+       
 
         // Disable all answer buttons
         for (JButton button : answerButtons) {
@@ -270,7 +270,7 @@ public class reviewPage {
 
             resultLabel.setText(
                 "Incorrect. Correct answer: "
-                + result.getCorrectAnswer()
+                + result.getWord().getDefinition() 
             );
         }
 

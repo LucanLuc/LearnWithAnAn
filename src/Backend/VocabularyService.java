@@ -6,10 +6,15 @@ import java.util.List;
 public class VocabularyService {
 	private Dictionary dictionary;
 	private Review review; 
+	private ReviewHistory reviewHistory; 
+	private ReviewHistoryRepository reviewHistoryRepository; 
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
-		review = new Review(dictionary); 
+		review = new Review(dictionary);
+		
+		reviewHistory = new ReviewHistory(); 
+		reviewHistoryRepository = new ReviewHistoryRepository(); 
 	}
 	
 	public void addWord(String word, String definition, int correctCount, int wrongCount) {
@@ -51,7 +56,14 @@ public class VocabularyService {
 	    return review.getCurrentChoices();
 	}
 	public ReviewResult answerReview(String answer) {
-	    return review.checkAnswer(answer);
+	    ReviewResult result = review.checkAnswer(answer); 
+	    ReviewRecord record = new ReviewRecord(
+	    		result.getWord(), 
+	    		result.isCorrect());
+	    
+	    reviewHistory.addResult(record);
+	    reviewHistoryRepository.saveReview(record);
+	    return result; 
 	}
 	public int getReviewCorrect() {
 		return review.getNumOfCorrect(); 

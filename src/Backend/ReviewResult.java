@@ -1,21 +1,28 @@
 package Backend;
 
+import java.time.LocalDateTime;
+
 public class ReviewResult {
 
+    private Word word;
     private boolean correct;
-    private String correctAnswer;
+    private LocalDateTime reviewedAt;
 
-    public ReviewResult(boolean correct, String correctAnswer) {
+    public ReviewResult(Word word, boolean correct) {
+        this.word = word;
         this.correct = correct;
-        this.correctAnswer = correctAnswer;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
+    public Word getWord() {
+        return word;
     }
 
     public boolean isCorrect() {
         return correct;
     }
 
-    public String getCorrectAnswer() {
-        return correctAnswer;
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
     }
-    
 }

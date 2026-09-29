@@ -14,14 +14,11 @@ public class Review {
     private int numOfCorrect;
     private int numOfIncorrect;
     private List<String> currentChoices;
-    
 
     public Review(Dictionary dictionary) {
 
         this.dictionary = dictionary;
         this.random = new Random();
-
-        // Make a copy of the dictionary words
 
         this.numOfCorrect = 0;
         this.numOfIncorrect = 0;
@@ -29,7 +26,6 @@ public class Review {
     }
 
     // Get a random word
- // Get a random word
     public Word getRandomWord() {
 
         List<Word> words = dictionary.getWords();
@@ -56,8 +52,7 @@ public class Review {
 
         return currentWord;
     }
-   
-    
+
     // Generate possible definitions
     public List<String> getChoices(Word correctWord) {
 
@@ -71,7 +66,8 @@ public class Review {
         choices.add(correctWord.getDefinition());
 
         // Create a copy of all words
-        List<Word> otherWords = new ArrayList<> (dictionary.getWords()); 
+        List<Word> otherWords =
+            new ArrayList<>(dictionary.getWords());
 
         // Remove the correct word
         otherWords.remove(correctWord);
@@ -98,8 +94,9 @@ public class Review {
     // Check user's answer
     public ReviewResult checkAnswer(String answer) {
 
+        // No current question or no answer
         if (currentWord == null || answer == null) {
-            return new ReviewResult(false, "");
+            return new ReviewResult(currentWord, false);
         }
 
         boolean correct =
@@ -107,36 +104,39 @@ public class Review {
                        .equalsIgnoreCase(answer.trim());
 
         if (correct) {
+
             numOfCorrect++;
-            currentWord.incrementCorrect(); 
+            currentWord.incrementCorrect();
+
         } else {
+
             numOfIncorrect++;
-            currentWord.incrementWrong(); 
+            currentWord.incrementWrong();
         }
-        
+
+        // Save updated statistics
         dictionary.updateReviewStats(currentWord);
 
-        return new ReviewResult(
-            correct,
-            currentWord.getDefinition()
-        );
+        // Return result
+        return new ReviewResult(currentWord, correct);
     }
-    
-    
+
     public void startReview() {
-    	numOfCorrect =0; 
-    	numOfIncorrect = 0; 
-    	currentWord= null; 
+
+        numOfCorrect = 0;
+        numOfIncorrect = 0;
+        currentWord = null;
     }
 
     // Get number of correct answers
     public int getNumOfCorrect() {
         return numOfCorrect;
     }
+
     public Word getCurrentWord() {
-    	return currentWord; 
+        return currentWord;
     }
-    
+
     public Word nextQuestion() {
 
         getRandomWord();
@@ -149,10 +149,11 @@ public class Review {
 
         return currentWord;
     }
+
     public List<String> getCurrentChoices() {
         return currentChoices;
     }
-    
+
     // Get number of incorrect answers
     public int getNumOfIncorrect() {
         return numOfIncorrect;
@@ -162,7 +163,11 @@ public class Review {
     public int getTotalQuestions() {
         return numOfCorrect + numOfIncorrect;
     }
-    public ReviewSummary getSummary(){
-    	return new ReviewSummary(numOfCorrect, numOfIncorrect); 
-    	}
- }
+
+    public ReviewSummary getSummary() {
+        return new ReviewSummary(
+            numOfCorrect,
+            numOfIncorrect
+        );
+    }
+}
