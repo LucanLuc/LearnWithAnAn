@@ -1,50 +1,80 @@
 package Backend;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Map;
-
 public class ReviewPriorityService {
 
     public double calculatePriority(
             WordLearningStats stats) {
 
-        // Never reviewed before
+        // Never reviewed
         if (stats.getTotalReviews() == 0) {
-            return 100.0;
+            return 1000.0;
         }
 
         double priority = 0.0;
 
-        // -------------------------
-        // 1. Incorrect answers
-        // -------------------------
+        LearningState state =
+            stats.getLearningState();
 
-        priority += stats.getIncorrectReviews() * 10;
+        long hoursSinceReview =
+            stats.getHoursSinceLastReview();
 
-        // -------------------------
-        // 2. Low accuracy
-        // -------------------------
+        /*
+         * Different learning states have
+         * different base priorities.
+         */
+        switch (state) {
 
-        double accuracy = stats.getAccuracy();
+            case WEAK:
+                priority += 100;
+                break;
 
-        priority += (100 - accuracy);
+            case LEARNING:
+                priority += 70;
+                break;
 
-        // -------------------------
-        // 3. Time since last review
-        // -------------------------
+            case FAMILIAR:
+                priority += 40;
+                break;
 
-        if (stats.getLastReviewedAt() != null) {
+            case MASTERED:
+                priority += 10;
+                break;
 
-            long hoursSinceReview =
-                Duration.between(
-                    stats.getLastReviewedAt(),
-                    LocalDateTime.now()
-                ).toHours();
+            case NEW:
+                priority += 1000;
+                break;
+        }
+
+        /*
+         * Incorrect answers increase priority.
+         */
+        priority +=
+            stats.getIncorrectReviews() * 15;
+
+        /*
+         * Lower accuracy increases priority.
+         */
+        double overallAccuracy =
+        	    stats.getAccuracy();
+
+        double recentAccuracy =
+        	    stats.getRecentAccuracy(3);
+
+        priority +=
+        	    (100 - overallAccuracy);
+
+        priority +=
+        	    (100 - recentAccuracy) * 0.5;
+
+        /*
+         * More time since the last review
+         * increases priority.
+         */
+        if (hoursSinceReview != Long.MAX_VALUE) {
 
             priority += Math.min(
-                hoursSinceReview,
-                50
+                hoursSinceReview * 2,
+                100
             );
         }
 

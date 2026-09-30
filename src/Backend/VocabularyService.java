@@ -144,6 +144,20 @@ public class VocabularyService {
 			return reviewHistory; 
 		}
 		
+		public LearningState getLearningState(Word word) {
+			LearningStatsService statsService = new LearningStatsService(); 
+			
+			Map<Word, WordLearningStats> stats = statsService.calculateStats(dictionary.getWords(), reviewHistory); 
+			
+			WordLearningStats wordStats = stats.get(word); 
+			
+			if (wordStats == null) {
+				return LearningState.NEW;
+			}
+			
+			return wordStats.getLearningState(); 
+		}
+		
 }
 
 
