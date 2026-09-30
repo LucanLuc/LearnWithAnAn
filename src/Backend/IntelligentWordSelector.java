@@ -19,8 +19,11 @@ public class IntelligentWordSelector {
     }
 
     public Word chooseWord(
+
             List<Word> words,
+
             Map<Word, WordLearningStats> stats,
+
             Word previousWord) {
 
         if (words.isEmpty()) {
@@ -32,37 +35,15 @@ public class IntelligentWordSelector {
             return words.get(0);
         }
 
-        // Calculate the priority of every word
-        double highestPriority = -1;
-
-        for (Word word : words) {
-
-            if (word.equals(previousWord)) {
-                continue;
-            }
-
-            WordLearningStats wordStats =
-                stats.get(word);
-
-            if (wordStats == null) {
-                continue;
-            }
-
-            double priority =
-                priorityService.calculatePriority(
-                    wordStats
-                );
-
-            if (priority > highestPriority) {
-                highestPriority = priority;
-            }
-        }
-
-        // Find words close to the highest priority
         List<Word> candidates = new ArrayList<>();
+        List<Double> weights = new ArrayList<>();
 
+        double totalWeight = 0.0;
+
+        // Calculate the weight of every word
         for (Word word : words) {
 
+            // Avoid showing the same word twice in a row
             if (word.equals(previousWord)) {
                 continue;
             }
@@ -79,19 +60,41 @@ public class IntelligentWordSelector {
                     wordStats
                 );
 
-            // Allow words within 20 points of the highest
-            if (priority >= highestPriority - 20) {
-                candidates.add(word);
+            /*
+             * Priority becomes the probability weight.
+             *
+             * Higher priority = higher chance
+             * of being selected.
+             */
+            double weight = priority;
+
+            candidates.add(word);
+            weights.add(weight);
+
+            totalWeight += weight;
+        }
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        // Random number between 0 and totalWeight
+        double randomValue =
+            random.nextDouble() * totalWeight;
+
+        double cumulativeWeight = 0.0;
+
+        // Find which word the random value lands on
+        for (int i = 0; i < candidates.size(); i++) {
+
+            cumulativeWeight += weights.get(i);
+
+            if (randomValue < cumulativeWeight) {
+                return candidates.get(i);
             }
         }
 
-        // Randomly choose from the candidates
-        if (!candidates.isEmpty()) {
-            return candidates.get(
-                random.nextInt(candidates.size())
-            );
-        }
-
-        return null;
+        // Safety fallback
+        return candidates.get(candidates.size() - 1);
     }
 }
