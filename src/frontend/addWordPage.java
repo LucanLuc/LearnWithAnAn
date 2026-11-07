@@ -28,44 +28,73 @@ public class addWordPage {
 		JTextField defTextField = new JTextField(); 
 		defTextField.setBounds(50,50,200,30);
 		
+		
+		JLabel imageStatus = new JLabel(" "); 
+		JLabel imagePreview = new JLabel(); 
+		
+		imagePreview.setPreferredSize(new Dimension(200,200)); 
+		imagePreview.setHorizontalAlignment(SwingConstants.CENTER); 
 
 		
 		 JButton submitBtn = new JButton("Submit");
 
-	        submitBtn.addActionListener(e -> {
+		 submitBtn.addActionListener(e -> {
 
-	            String word = vocabTextField.getText().trim();
-	            String definition = defTextField.getText().trim();
+			    String word = vocabTextField.getText().trim();
+			    String definition = defTextField.getText().trim();
 
-	            if (word.isEmpty() || definition.isEmpty()) {
-	                JOptionPane.showMessageDialog(
-	                    frame,
-	                    "Please enter both the word and definition."
-	                );
-	                return;
-	            }
+			    if (word.isEmpty() || definition.isEmpty()) {
+			        JOptionPane.showMessageDialog(
+			            frame,
+			            "Please enter both the word and definition."
+			        );
+			        return;
+			    }
 
-	            service.addWord(word, definition);
-	            JOptionPane.showMessageDialog(frame, "Word added"); 
+			    submitBtn.setEnabled(false);
+			    imageStatus.setText("Saving word and generating image...");
 
-	            // Clear text fields after submitting
-	            vocabTextField.setText("");
-	            defTextField.setText("");
+			    service.addWordWithImage(word, definition)
+			        .whenComplete((imagePath, error) -> {
 
-	            // Put cursor back in the word field
-	            vocabTextField.requestFocusInWindow();
-	        });
+			            SwingUtilities.invokeLater(() -> {
 
-	        // Enter in word field → move to definition field
-	        vocabTextField.addActionListener(e -> {
-	            defTextField.requestFocusInWindow();
-	        });
+			                submitBtn.setEnabled(true);
 
-	        // Enter in definition field → automatically click Submit
-	        defTextField.addActionListener(e -> {
-	            submitBtn.doClick();
-	        });
+			                if (error != null) {
 
+			                    imageStatus.setText(
+			                        "Word saved, but image generation failed."
+			                    );
+
+			                    error.printStackTrace();
+
+			                } else {
+
+			                    imageStatus.setText(
+			                        "Image generated successfully!"
+			                    );
+
+			                    ImageIcon original =
+			                        new ImageIcon(imagePath);
+
+			                    Image scaled = original.getImage()
+			                        .getScaledInstance(
+			                            180,
+			                            180,
+			                            Image.SCALE_SMOOTH
+			                        );
+
+			                    imagePreview.setIcon(
+			                        new ImageIcon(scaled)
+			                    );
+			                }
+			            });
+			        });
+
+			    vocabTextField.setText("");
+			    defTextField.setText("");
+			});
 		
 		JButton deleteWordBtn = new JButton("Delete Word"); 
 		deleteWordBtn.addActionListener(e -> {
@@ -115,6 +144,9 @@ public class addWordPage {
 		panel.add(H2); 
 		panel.add(defTextField); 
 		panel.add(Box.createRigidArea(new Dimension(0, 40))); 
+		panel.add(imageStatus); 
+		panel.add(Box.createRigidArea(new Dimension(0, 10))); 
+		panel.add(imagePreview); 
 		panel.add(controlPanel); 
 		panel.add(Box.createVerticalGlue()); 
 		

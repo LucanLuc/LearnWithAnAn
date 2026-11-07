@@ -180,4 +180,24 @@ public class WordRepository {
             e.printStackTrace();
         }
     }
+    
+    public void updateImagePath(Word word) {
+    	String sql = """ 
+    			UPDATE words 
+    			SET image_path = ? 
+    			WHERE word = ? 
+    			"""; 
+    	
+    	try (
+    		Connection conn = DatabaseConnection.getConnection();
+    		PreparedStatement pstmt = conn.prepareStatement(sql)){
+    		pstmt.setString(1, word.getImagePath());
+    		pstmt.setString(2, word.getWord()); 
+    		pstmt.executeUpdate(); 
+    		
+    		System.out.println("Image path updated successfully!"); 
+    	} catch (SQLException e) {
+    		e.printStackTrace();
+    	}
+    }
 }

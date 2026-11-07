@@ -2,14 +2,19 @@ package frontend;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Image;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import Backend.VocabularyService;
 import model.Word;
@@ -63,67 +68,128 @@ public class deleteWord {
         mainPanel.add(searchResult); 
 		
 		
-        for (Word word : service.getAllWords()) {
 
-            JPanel row = new JPanel(new BorderLayout(10, 0));
+		for (Word word : service.getAllWords()) {
+		
+		    JPanel row = new JPanel(new BorderLayout(10, 0));
+		
+		    JTextField wordField = new JTextField(word.getWord());
+		    JTextField definitionField = new JTextField(word.getDefinition());
+		
+		    wordField.setPreferredSize(new Dimension(130, 30));
+		    definitionField.setPreferredSize(new Dimension(250, 30));
+		
+		    // 1. Display the vocabulary image
+		    JLabel imageLabel = new JLabel("No image");
+		    imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		    imageLabel.setPreferredSize(new Dimension(100, 100));
+		
+		    String imagePath = word.getImagePath();
+		
+		    if (imagePath != null && !imagePath.isBlank()) {
+		
+		        ImageIcon originalIcon = new ImageIcon(imagePath);
+		
+		        if (originalIcon.getIconWidth() > 0) {
+		
+		            Image scaledImage = originalIcon.getImage()
+		                .getScaledInstance(
+		                    90,
+		                    90,
+		                    Image.SCALE_SMOOTH
+		                );
+		
+		            imageLabel.setIcon(new ImageIcon(scaledImage));
+		            imageLabel.setText("");
+		
+		        }
+		    }
+		
+		    // 2. Display the date
+		    JLabel dateLabel = new JLabel(
+		        word.getDateAdded().toLocalDate().toString()
+		    );
+		
+		    // 3. Save changes
+		    JButton saveButton = new JButton("Save");
+		
+		    saveButton.addActionListener(e -> {
+		
+		        String newWord = wordField.getText().trim();
+		        String newDefinition = definitionField.getText().trim();
+		
+		        if (newWord.isEmpty() || newDefinition.isEmpty()) {
+		            JOptionPane.showMessageDialog(
+		                frame,
+		                "Word and definition cannot be empty."
+		            );
+		            return;
+		        }
+		
+		        service.updateWord(word, newWord, newDefinition);
+		
+		        JOptionPane.showMessageDialog(
+		            frame,
+		            "Word updated successfully."
+		        );
+		    });
+		
+		    // 4. Delete word
+		    JButton deleteButton = new JButton("Delete");
+		
+		    deleteButton.addActionListener(e -> {
+		
+		        int choice = JOptionPane.showConfirmDialog(
+		            frame,
+		            "Delete " + word.getWord() + "?",
+		            "Confirm deletion",
+		            JOptionPane.YES_NO_OPTION
+		        );
+		
+		        if (choice == JOptionPane.YES_OPTION) {
+		
+		            service.deleteWord(word);
+		
+		            wordPanel.remove(row);
+		            wordPanel.revalidate();
+		            wordPanel.repaint();
+		        }
+		    });
+		
+		    // 5. Arrange the buttons
+		    JPanel buttonPanel = new JPanel();
+		
+		    buttonPanel.add(saveButton);
+		    buttonPanel.add(deleteButton);
+		
+		    // 6. Arrange date and buttons vertically
+		    JPanel informationPanel = new JPanel();
+		
+		    informationPanel.setLayout(
+		        new BoxLayout(informationPanel, BoxLayout.Y_AXIS)
+		    );
+		
+		    informationPanel.add(dateLabel);
+		    informationPanel.add(buttonPanel);
+		
+		    // 7. Assemble the vocabulary row
+		    row.add(imageLabel, BorderLayout.WEST);
+		    row.add(wordField, BorderLayout.CENTER);
+		
+		    JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
+		
+		    rightPanel.add(definitionField, BorderLayout.NORTH);
+		    rightPanel.add(informationPanel, BorderLayout.CENTER);
+		
+		    row.add(rightPanel, BorderLayout.CENTER);
+		
+		    wordPanel.add(row);
+		    wordPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+		}
 
-            JTextField wordField = new JTextField(word.getWord());
-            JTextField definitionField = new JTextField(word.getDefinition());
-            
-            JLabel dateLabel = new JLabel(
-                word.getDateAdded().toLocalDate().toString()
-            );
-
-            wordField.setPreferredSize(new Dimension(150, 30));
-            definitionField.setPreferredSize(new Dimension(300, 30));
-            dateLabel.setPreferredSize(new Dimension(100, 30));
-
-            JButton saveButton = new JButton("Save");
-
-            saveButton.addActionListener(e -> {
-
-                String newWord = wordField.getText();
-                String newDefinition = definitionField.getText();
-
-                service.updateWord(
-                    word,
-                    newWord,
-                    newDefinition
-                );
-            });
-
-            JButton deleteButton = new JButton("Delete");
-
-            deleteButton.addActionListener(e -> {
-
-                service.deleteWord(word);
-
-                wordPanel.remove(row);
-                wordPanel.revalidate();
-                wordPanel.repaint();
-            });
-
-            JPanel buttonPanel = new JPanel();
-
-            buttonPanel.add(saveButton);
-            buttonPanel.add(deleteButton);
-
-            row.add(wordField, BorderLayout.WEST);
-            row.add(definitionField, BorderLayout.CENTER);
-            row.add(dateLabel, BorderLayout.EAST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-
-            rightPanel.add(dateLabel, BorderLayout.CENTER);
-            rightPanel.add(buttonPanel, BorderLayout.EAST);
-
-            row.add(rightPanel, BorderLayout.EAST);
-
-            wordPanel.add(row);
-            wordPanel.add(
-                Box.createRigidArea(new Dimension(0, 10))
-            );
-        }
+      
+        
+        
         JScrollPane scrollPane = new JScrollPane(wordPanel);
         scrollPane.setPreferredSize(new Dimension(600, 400));
 

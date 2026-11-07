@@ -3,13 +3,16 @@ package Backend;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
+import ai.AIImageService;
+import java.io.IOException;
 import model.LearningState;
 import model.ReviewRecord;
 import model.ReviewResult;
 import model.ReviewSummary;
 import model.Word;
 import repository.ReviewHistoryRepository; 
+import java.util.concurrent.CompletableFuture; 
+import java.util.concurrent.CompletionException; 
 
 public class VocabularyService {
 	private Dictionary dictionary;
@@ -17,11 +20,13 @@ public class VocabularyService {
 	private ReviewHistory reviewHistory; 
 	private ReviewHistoryRepository reviewHistoryRepository; 
 	private LearningStatsService learningStatsService; 
+	private AIImageService aiImageService; 
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
 		review = new Review(dictionary);
 		
+		aiImageService = new AIImageService(); 
 		learningStatsService = new LearningStatsService(); 
 		reviewHistory = new ReviewHistory(); 
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
@@ -37,9 +42,8 @@ public class VocabularyService {
 		return learningStatsService.calculateStats(dictionary.getWords(), reviewHistory); 
 	}
 	
-
-	
 	public void addWord(String word, String definition) {
+
 	    Word newWord = new Word(
 	        word,
 	        definition,
@@ -53,6 +57,23 @@ public class VocabularyService {
 	
 	public Word searchWord(String word) {
 		return dictionary.searchWord(word); 
+	}
+	
+	public CompletableFuture<String> addWordWithImage(String word, String definition) {
+		Word newWord = new Word(word, definition, LocalDateTime.now(), 0, 0); 
+		
+		dictionary.addWord(newWord); 
+		
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				String imagePath = aiImageService.generateImage(newWord); 
+				
+				dictionary.updateImagePath(newWord); 
+				return imagePath; 
+			} catch (Exception e) {
+				throw new CompletionException(e); 
+			}
+		}); 
 	}
 	
 	

@@ -106,4 +106,8 @@ public class Dictionary {
         }
     }
     
+    public void updateImagePath(Word word) {
+    	repository.updateImagePath(word); 
+    }
+    
 }
