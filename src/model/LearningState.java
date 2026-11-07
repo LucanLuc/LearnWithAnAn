@@ -1,4 +1,4 @@
-package Backend;
+package model;
 
 //enum: define a fixed set of possible values. 
 

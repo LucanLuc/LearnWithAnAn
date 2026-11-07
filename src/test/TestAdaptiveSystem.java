@@ -6,8 +6,8 @@ import Backend.IntelligentWordSelector;
 import Backend.LearningStatsService;
 import Backend.ReviewPriorityService;
 import Backend.VocabularyService;
-import Backend.Word;
 import Backend.WordLearningStats;
+import model.Word;
 
 public class TestAdaptiveSystem {
 

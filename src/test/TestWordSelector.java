@@ -5,8 +5,8 @@ import java.util.Map;
 import Backend.IntelligentWordSelector;
 import Backend.LearningStatsService;
 import Backend.VocabularyService;
-import Backend.Word;
 import Backend.WordLearningStats;
+import model.Word;
 import Backend.ReviewPriorityService;
 
 public class TestWordSelector {

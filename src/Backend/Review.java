@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
+import model.ReviewResult;
+import model.ReviewSummary;
+import model.Word;
+
 import java.util.Map; 
 
 public class Review {

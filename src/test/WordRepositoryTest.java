@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterEach; 
-import Backend.Word;
-import Backend.WordRepository;
+import org.junit.jupiter.api.AfterEach;
+
+import model.Word;
+import repository.WordRepository;
 
 class WordRepositoryTest {
 	@AfterEach

@@ -1,5 +1,9 @@
 package Backend;
 import java.util.*;
+
+import model.Word;
+import repository.WordRepository;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime; 
 

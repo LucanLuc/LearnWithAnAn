@@ -2,7 +2,14 @@ package Backend;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map; 
+import java.util.Map;
+
+import model.LearningState;
+import model.ReviewRecord;
+import model.ReviewResult;
+import model.ReviewSummary;
+import model.Word;
+import repository.ReviewHistoryRepository; 
 
 public class VocabularyService {
 	private Dictionary dictionary;

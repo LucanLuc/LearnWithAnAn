@@ -1,5 +1,7 @@
 package Backend;
 
+import model.LearningState;
+
 public class ReviewPriorityService {
 
 	public double calculatePriority(

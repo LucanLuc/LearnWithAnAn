@@ -4,10 +4,10 @@ import java.awt.*;
 import java.util.List;
 import javax.swing.*;
 
-import Backend.Word;
 import Backend.VocabularyService;
-import Backend.ReviewResult;
-import Backend.ReviewSummary;
+import model.ReviewResult;
+import model.ReviewSummary;
+import model.Word;
 
 public class reviewPage {
 

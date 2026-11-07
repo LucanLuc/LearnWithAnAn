@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import model.ReviewRecord;
+import model.Word;
+
 public class LearningStatsService {
 
     public Map<Word, WordLearningStats> calculateStats(

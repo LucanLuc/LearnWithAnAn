@@ -3,6 +3,8 @@ package Backend;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.ReviewRecord;
+
 public class ReviewHistory {
 
     private List<ReviewRecord> results;

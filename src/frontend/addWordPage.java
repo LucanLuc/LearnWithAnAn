@@ -3,7 +3,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import Backend.VocabularyService;
-import Backend.Word;
+import model.Word;
 
 public class addWordPage {
 	private VocabularyService service;

@@ -1,4 +1,4 @@
-package Backend;
+package repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,9 +9,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReviewHistoryRepository {
+import model.ReviewRecord;
+import model.Word;
 
-    // Save one review record to PostgreSQL
+public class ReviewHistoryRepository {
     public void saveReview(ReviewRecord record) {
 
         String sql = """

@@ -12,7 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import Backend.VocabularyService;
-import Backend.Word;
+import model.Word;
 
 public class deleteWord {
 

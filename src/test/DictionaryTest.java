@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 import Backend.Dictionary;
-import Backend.Word;
+import model.Word;
 
 class DictionaryTest {
 	

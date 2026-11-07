@@ -2,7 +2,11 @@ package Backend;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList; 
-import java.util.List; 
+import java.util.List;
+
+import model.LearningState;
+import model.ReviewRecord;
+import model.Word; 
 
 public class WordLearningStats {
 	private Word word; 

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import Backend.Dictionary;
 import Backend.Review;
-import Backend.Word;
+import model.Word;
 
 class ReviewTest {
 

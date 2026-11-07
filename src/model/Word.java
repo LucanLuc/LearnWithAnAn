@@ -1,4 +1,4 @@
-package Backend;
+package model;
 import java.util.*; 
 import java.time.LocalDateTime; 
 
@@ -11,6 +11,9 @@ public class Word {
 	//stats fields
 	private int correctCount; 
 	private int wrongCount;
+	
+	//image
+	private String imagePath; 
 
 	public void incrementCorrect() {
 		correctCount++; 
@@ -51,5 +54,13 @@ public class Word {
 	}
 	public LocalDateTime getDateAdded() {
 		return dateAdded; 
+	}
+	
+	public String getImagePath() {
+		return imagePath; 
+	}
+	
+	public void setImagePath(String imagePath) {
+		this.imagePath = imagePath; 
 	}
 }
