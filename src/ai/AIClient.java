@@ -1,11 +1,12 @@
-
 package ai;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class AIClient {
@@ -13,45 +14,59 @@ public class AIClient {
     private final HttpClient httpClient;
 
     public AIClient() {
-
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
     }
 
-    // Send a POST request to the AI provider
-    public String postJson(String jsonBody)
+    public byte[] generateImage(String prompt)
             throws IOException, InterruptedException {
 
-        String apiKey = AIConfig.getApiKey();
+        String encodedPrompt = URLEncoder
+                .encode(prompt, StandardCharsets.UTF_8)
+                .replace("+", "%20");
+
+        String encodedModel = URLEncoder
+                .encode(AIConfig.getImageModel(), StandardCharsets.UTF_8);
+
+        String url = AIConfig.getApiUrl()
+                + encodedPrompt
+                + "?model=" + encodedModel;
 
         HttpRequest request = HttpRequest.newBuilder()
-
-                .uri(URI.create(AIConfig.getApiUrl()))
-
-                .timeout(Duration.ofMinutes(3))
-
-                .header("Authorization", "Bearer " + apiKey)
-
-                .header("Content-Type", "application/json")
-
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(180))
+                .header("Authorization",
+                        "Bearer " + AIConfig.getApiKey())
+                .header("Accept", "image/*")
+                .GET()
                 .build();
 
-        HttpResponse<String> response = httpClient.send(
+        HttpResponse<byte[]> response = httpClient.send(
                 request,
-                HttpResponse.BodyHandlers.ofString()
+                HttpResponse.BodyHandlers.ofByteArray()
         );
 
-        // Check whether the request succeeded
-        if (response.statusCode() < 200 ||
-                response.statusCode() >= 300) {
+        if (response.statusCode() != 200) {
+            String errorBody = new String(
+                    response.body(),
+                    StandardCharsets.UTF_8
+            );
 
             throw new IOException(
-                    "AI API request failed.\n" +
-                    "HTTP Status: " + response.statusCode() +
-                    "\nResponse: " + response.body()
+                    "Pollinations API error: HTTP "
+                    + response.statusCode()
+                    + "\n" + errorBody
+            );
+        }
+
+        String contentType = response.headers()
+                .firstValue("Content-Type")
+                .orElse("");
+
+        if (!contentType.startsWith("image/")) {
+            throw new IOException(
+                    "Expected an image, but received: " + contentType
             );
         }
 

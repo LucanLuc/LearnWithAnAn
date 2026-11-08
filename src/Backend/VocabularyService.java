@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import ai.AIImageService;
-import java.io.IOException;
 import model.LearningState;
 import model.ReviewRecord;
 import model.ReviewResult;
@@ -53,6 +52,8 @@ public class VocabularyService {
 	    );
 
 	    dictionary.addWord(newWord);
+	    
+	    generateImageForWord(newWord); 
 	}
 	
 	public Word searchWord(String word) {
@@ -185,6 +186,22 @@ public class VocabularyService {
 			
 			return wordStats.getLearningState(); 
 		}
+		
+		
+	public void generateImageForWord(Word word) {
+		CompletableFuture.runAsync(( )-> {
+			try {
+				String imagePath = aiImageService.generateImage(word); 
+				dictionary.updateImagePath(word); 
+				
+				System.out.println("Image generated successfully for: " + word.getWord()); 
+			} catch (Exception e) {
+				System.err.println("Image generation failed for: " + word.getWord()); 
+				
+				e.printStackTrace(); 
+			}
+		});
+	}
 		
 }
 
