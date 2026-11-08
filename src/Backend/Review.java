@@ -20,16 +20,23 @@ public class Review {
     private int numOfCorrect;
     private int numOfIncorrect;
     private List<String> currentChoices;
-    private IntelligentWordSelector wordSelector; 
+    private IntelligentWordSelector wordSelector;
+    private boolean answered;
+    private LearningStatsService statsService;
 
     public Review(Dictionary dictionary) {
 
         this.dictionary = dictionary;
         this.random = new Random();
 
+        this.wordSelector = new IntelligentWordSelector();
+        this.statsService = new LearningStatsService();
+
         this.numOfCorrect = 0;
         this.numOfIncorrect = 0;
         this.currentWord = null;
+        this.currentChoices = new ArrayList<>();
+        this.answered = false;
     }
 
     // Get a random word
@@ -101,40 +108,44 @@ public class Review {
     // Check user's answer
     public ReviewResult checkAnswer(String answer) {
 
-        // No current question or no answer
-        if (currentWord == null || answer == null) {
+        if (currentWord == null ||
+            answer == null ||
+            answer.trim().isEmpty() ||
+            answered) {
+
             return new ReviewResult(currentWord, false);
         }
 
-        boolean correct =
-            currentWord.getDefinition()
-                       .equalsIgnoreCase(answer.trim());
+        answered = true;
+
+        boolean correct = currentWord.getDefinition()
+                .equalsIgnoreCase(answer.trim());
 
         if (correct) {
-
             numOfCorrect++;
             currentWord.incrementCorrect();
-
         } else {
-
             numOfIncorrect++;
             currentWord.incrementWrong();
         }
 
-        // Save updated statistics
         dictionary.updateReviewStats(currentWord);
 
-        // Return result
         return new ReviewResult(currentWord, correct);
     }
 
+    public boolean hasAnsweredCurrentQuestions() {
+    	return answered; 
+    }
+    
     public void startReview() {
 
         numOfCorrect = 0;
         numOfIncorrect = 0;
         currentWord = null;
+        currentChoices = new ArrayList<>();
+        answered = false;
     }
-
     // Get number of correct answers
     public int getNumOfCorrect() {
         return numOfCorrect;
@@ -146,6 +157,8 @@ public class Review {
 
     public Word nextQuestion(ReviewHistory history) {
 
+        answered = false;
+
         getIntelligentWord(history);
 
         if (currentWord != null) {
@@ -156,7 +169,7 @@ public class Review {
 
         return currentWord;
     }
-
+    
     public List<String> getCurrentChoices() {
         return currentChoices;
     }
@@ -177,6 +190,7 @@ public class Review {
             numOfIncorrect
         );
     }
+    
     public Word getIntelligentWord(ReviewHistory history) {
 
         List<Word> words = dictionary.getWords();
@@ -186,26 +200,14 @@ public class Review {
             return null;
         }
 
-        IntelligentWordSelector selector =
-            new IntelligentWordSelector();
-
-        LearningStatsService statsService =
-            new LearningStatsService();
-
         Map<Word, WordLearningStats> stats =
-            statsService.calculateStats(
-                words,
-                history
-            );
+                statsService.calculateStats(words, history);
 
-        Word nextWord =
-            selector.chooseWord(
+        currentWord = wordSelector.chooseWord(
                 words,
                 stats,
                 currentWord
-            );
-
-        currentWord = nextWord;
+        );
 
         return currentWord;
     }

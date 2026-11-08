@@ -1,4 +1,6 @@
+
 package frontend;
+
 import java.awt.*;
 import javax.swing.*;
 
@@ -6,151 +8,201 @@ import Backend.VocabularyService;
 import model.Word;
 
 public class addWordPage {
-	private VocabularyService service;
-	public addWordPage(VocabularyService service) {
-	    this.service = service;
-	    
-		JFrame frame = new JFrame("add word page");
-		Style.stylePage(frame); 
-		
-		JPanel panel = new JPanel(); 
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); 
-		JLabel title = new JLabel("Vocab"); 
-		Style.styleHeading1(title);
-	
-		
-		JLabel H1 = new JLabel("Enter the word: "); 
-		JTextField vocabTextField = new JTextField(30);
-		vocabTextField.setBounds(50, 50, 100, 30); 
-		
-					
-		JLabel H2 = new JLabel("Enter the definition: "); 
-		JTextField defTextField = new JTextField(); 
-		defTextField.setBounds(50,50,200,30);
-		
-		
-		JLabel imageStatus = new JLabel(" "); 
-		JLabel imagePreview = new JLabel(); 
-		
-		imagePreview.setPreferredSize(new Dimension(200,200)); 
-		imagePreview.setHorizontalAlignment(SwingConstants.CENTER); 
 
-		
-		 JButton submitBtn = new JButton("Submit");
+    private VocabularyService service;
 
-		 submitBtn.addActionListener(e -> {
+    public addWordPage(VocabularyService service) {
 
-			    String word = vocabTextField.getText().trim();
-			    String definition = defTextField.getText().trim();
+        this.service = service;
 
-			    if (word.isEmpty() || definition.isEmpty()) {
-			        JOptionPane.showMessageDialog(
-			            frame,
-			            "Please enter both the word and definition."
-			        );
-			        return;
-			    }
+        JFrame frame = new JFrame("Add Word");
+        Style.stylePage(frame);
 
-			    submitBtn.setEnabled(false);
-			    imageStatus.setText("Saving word and generating image...");
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-			    service.addWordWithImage(word, definition)
-			        .whenComplete((imagePath, error) -> {
+        // =========================
+        // TITLE
+        // =========================
 
-			            SwingUtilities.invokeLater(() -> {
+        JLabel title = new JLabel("Vocabulary");
+        Style.styleHeading1(title);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-			                submitBtn.setEnabled(true);
+        // =========================
+        // WORD INPUT
+        // =========================
 
-			                if (error != null) {
+        JLabel H1 = new JLabel("Enter the word:");
 
-			                    imageStatus.setText(
-			                        "Word saved, but image generation failed."
-			                    );
+        JTextField vocabTextField = new JTextField(30);
 
-			                    error.printStackTrace();
+        // =========================
+        // DEFINITION INPUT
+        // =========================
 
-			                } else {
+        JLabel H2 = new JLabel("Enter the definition:");
 
-			                    imageStatus.setText(
-			                        "Image generated successfully!"
-			                    );
+        JTextField defTextField = new JTextField(30);
 
-			                    ImageIcon original =
-			                        new ImageIcon(imagePath);
+        // =========================
+        // BUTTONS
+        // =========================
 
-			                    Image scaled = original.getImage()
-			                        .getScaledInstance(
-			                            180,
-			                            180,
-			                            Image.SCALE_SMOOTH
-			                        );
+        JButton submitBtn = new JButton("Submit");
 
-			                    imagePreview.setIcon(
-			                        new ImageIcon(scaled)
-			                    );
-			                }
-			            });
-			        });
+        JButton deleteWordBtn = new JButton("Delete Word");
 
-			    vocabTextField.setText("");
-			    defTextField.setText("");
-			});
-		
-		JButton deleteWordBtn = new JButton("Delete Word"); 
-		deleteWordBtn.addActionListener(e -> {
-			String wordInput = vocabTextField.getText().trim();
+        JButton returnBtn = new JButton("Return");
 
-			Word wordToDelete = service.searchWord(wordInput);
+        // =========================
+        // SUBMIT FUNCTION
+        // =========================
 
-			if (wordToDelete != null) {
+        Runnable submitWord = () -> {
 
-			    service.deleteWord(wordToDelete);
+            String word = vocabTextField.getText().trim();
+            String definition = defTextField.getText().trim();
 
-			    JOptionPane.showMessageDialog(
-			        frame,
-			        "Word deleted successfully."
-			    );
+            if (word.isEmpty() || definition.isEmpty()) {
 
-			} else {
+                JOptionPane.showMessageDialog(
+                    frame,
+                    "Please enter both the word and definition."
+                );
 
-			    JOptionPane.showMessageDialog(
-			        frame,
-			        "Word not found."
-			    );
-			}
-		});
-			
-		
-		JButton returnBtn = new JButton("Return"); 
-		returnBtn.addActionListener(e -> {
-			new Homepage(); 
-			frame.dispose(); 
-		});
-		
-			
-		JPanel controlPanel = new JPanel(); 
-		controlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0)); 
-		controlPanel.add(submitBtn);
-		controlPanel.add(deleteWordBtn); 
-		controlPanel.add(returnBtn);
-		panel.add(controlPanel); 
-		
-		panel.add(Box.createVerticalGlue());
-		panel.add(title); 
-		panel.add(Box.createRigidArea(new Dimension(0,40)));
-		panel.add(H1);
-		panel.add(vocabTextField); 
-		panel.add(Box.createRigidArea(new Dimension(0,40))); 
-		panel.add(H2); 
-		panel.add(defTextField); 
-		panel.add(Box.createRigidArea(new Dimension(0, 40))); 
-		panel.add(imageStatus); 
-		panel.add(Box.createRigidArea(new Dimension(0, 10))); 
-		panel.add(imagePreview); 
-		panel.add(controlPanel); 
-		panel.add(Box.createVerticalGlue()); 
-		
-		frame.add(panel); 
-		frame.setVisible(true); 
-	}
+                return;
+            }
+
+            service.addWord(word, definition);
+
+            JOptionPane.showMessageDialog(
+                frame,
+                "Word added successfully!"
+            );
+
+            vocabTextField.setText("");
+            defTextField.setText("");
+
+            vocabTextField.requestFocusInWindow();
+        };
+
+        submitBtn.addActionListener(e -> submitWord.run());
+
+        // =========================
+        // ENTER KEY NAVIGATION
+        // =========================
+
+        vocabTextField.addActionListener(e -> {
+            defTextField.requestFocusInWindow();
+        });
+
+        defTextField.addActionListener(e -> {
+            submitWord.run();
+        });
+
+        // =========================
+        // DELETE WORD
+        // =========================
+
+        deleteWordBtn.addActionListener(e -> {
+
+            String wordInput = vocabTextField.getText().trim();
+
+            if (wordInput.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                    frame,
+                    "Please enter a word to delete."
+                );
+                return;
+            }
+
+            Word wordToDelete = service.searchWord(wordInput);
+
+            if (wordToDelete != null) {
+
+                service.deleteWord(wordToDelete);
+
+                JOptionPane.showMessageDialog(
+                    frame,
+                    "Word deleted successfully."
+                );
+
+                vocabTextField.setText("");
+                defTextField.setText("");
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                    frame,
+                    "Word not found."
+                );
+            }
+        });
+
+        // =========================
+        // RETURN
+        // =========================
+
+        returnBtn.addActionListener(e -> {
+
+            new Homepage(service);
+
+            frame.dispose();
+        });
+
+        // =========================
+        // CONTROL PANEL
+        // =========================
+
+        JPanel controlPanel = new JPanel();
+
+        controlPanel.setLayout(
+            new FlowLayout(FlowLayout.CENTER, 20, 0)
+        );
+
+        controlPanel.add(submitBtn);
+        controlPanel.add(deleteWordBtn);
+        controlPanel.add(returnBtn);
+
+        // =========================
+        // ADD COMPONENTS
+        // =========================
+
+        panel.add(Box.createVerticalGlue());
+
+        panel.add(title);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 40)));
+
+        panel.add(H1);
+        panel.add(vocabTextField);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 30)));
+
+        panel.add(H2);
+        panel.add(defTextField);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 40)));
+
+        panel.add(controlPanel);
+
+        panel.add(Box.createVerticalGlue());
+
+        // =========================
+        // FRAME
+        // =========================
+
+        frame.add(panel);
+
+        frame.setSize(500, 500);
+
+        frame.setLocationRelativeTo(null);
+
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        frame.setVisible(true);
+
+        vocabTextField.requestFocusInWindow();
+    }
 }

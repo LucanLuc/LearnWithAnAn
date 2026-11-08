@@ -6,22 +6,37 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.Word;
+import exception.DatabaseOperationException;
 
-public class WordRepository {
+public class WordRepository implements WordRepositoryInterface {
+
+    // Convert SQL errors into application-level exceptions
+    private DatabaseOperationException databaseError(
+        String operation,
+        SQLException e
+    ) {
+        return new DatabaseOperationException(
+            "Database operation failed: " + operation,
+            e
+        );
+    }
 
     // Save ONE word to PostgreSQL
+    @Override
     public void saveWord(Word word) {
 
         String sql = """
-                INSERT INTO words
-                (word, definition, date_added, correct_count,
-                 wrong_count, image_path)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO words
+            (word, definition, date_added, correct_count,
+             wrong_count, image_path)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """;
 
         try (
             Connection conn = DatabaseConnection.getConnection();
@@ -37,24 +52,22 @@ public class WordRepository {
 
             pstmt.executeUpdate();
 
-            System.out.println("Word saved successfully!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw databaseError("saving word", e);
         }
     }
 
-
     // Load ALL words from PostgreSQL
+    @Override
     public List<Word> loadWords() {
 
         List<Word> words = new ArrayList<>();
 
         String sql = """
-                SELECT word, definition, date_added,
-                       correct_count, wrong_count, image_path
-                FROM words
-                """;
+            SELECT word, definition, date_added,
+                   correct_count, wrong_count, image_path
+            FROM words
+            """;
 
         try (
             Connection conn = DatabaseConnection.getConnection();
@@ -69,8 +82,10 @@ public class WordRepository {
 
                 Timestamp timestamp = rs.getTimestamp("date_added");
 
-                java.time.LocalDateTime dateAdded =
-                        timestamp != null ? timestamp.toLocalDateTime() : null;
+                LocalDateTime dateAdded =
+                    timestamp != null
+                    ? timestamp.toLocalDateTime()
+                    : null;
 
                 int correctCount = rs.getInt("correct_count");
                 int wrongCount = rs.getInt("wrong_count");
@@ -78,34 +93,33 @@ public class WordRepository {
                 String imagePath = rs.getString("image_path");
 
                 Word word = new Word(
-                        wordText,
-                        definition,
-                        dateAdded,
-                        correctCount,
-                        wrongCount
+                    wordText,
+                    definition,
+                    dateAdded,
+                    correctCount,
+                    wrongCount
                 );
 
-                // Restore the image path from the database
                 word.setImagePath(imagePath);
 
                 words.add(word);
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw databaseError("loading words", e);
         }
 
         return words;
     }
 
-
     // Delete a word
+    @Override
     public void deleteWord(Word word) {
 
         String sql = """
-                DELETE FROM words
-                WHERE word = ?
-                """;
+            DELETE FROM words
+            WHERE word = ?
+            """;
 
         try (
             Connection conn = DatabaseConnection.getConnection();
@@ -113,25 +127,22 @@ public class WordRepository {
         ) {
 
             pstmt.setString(1, word.getWord());
-
             pstmt.executeUpdate();
 
-            System.out.println("Word deleted successfully!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw databaseError("deleting word", e);
         }
     }
 
-
     // Update word information
+    @Override
     public void updateWord(String oldWord, Word word) {
 
         String sql = """
-                UPDATE words
-                SET word = ?, definition = ?, image_path = ?
-                WHERE word = ?
-                """;
+            UPDATE words
+            SET word = ?, definition = ?, image_path = ?
+            WHERE word = ?
+            """;
 
         try (
             Connection conn = DatabaseConnection.getConnection();
@@ -145,23 +156,21 @@ public class WordRepository {
 
             pstmt.executeUpdate();
 
-            System.out.println("Word updated successfully!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw databaseError("updating word", e);
         }
     }
 
-
     // Update review statistics
+    @Override
     public void updateReviewStats(Word word) {
 
         String sql = """
-                UPDATE words
-                SET correct_count = ?,
-                    wrong_count = ?
-                WHERE word = ?
-                """;
+            UPDATE words
+            SET correct_count = ?,
+                wrong_count = ?
+            WHERE word = ?
+            """;
 
         try (
             Connection conn = DatabaseConnection.getConnection();
@@ -174,30 +183,33 @@ public class WordRepository {
 
             pstmt.executeUpdate();
 
-            System.out.println("Review statistics updated!");
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw databaseError("updating review statistics", e);
         }
     }
-    
+
+    // Update image path
+    @Override
     public void updateImagePath(Word word) {
-    	String sql = """ 
-    			UPDATE words 
-    			SET image_path = ? 
-    			WHERE word = ? 
-    			"""; 
-    	
-    	try (
-    		Connection conn = DatabaseConnection.getConnection();
-    		PreparedStatement pstmt = conn.prepareStatement(sql)){
-    		pstmt.setString(1, word.getImagePath());
-    		pstmt.setString(2, word.getWord()); 
-    		pstmt.executeUpdate(); 
-    		
-    		System.out.println("Image path updated successfully!"); 
-    	} catch (SQLException e) {
-    		e.printStackTrace();
-    	}
+
+        String sql = """
+            UPDATE words
+            SET image_path = ?
+            WHERE word = ?
+            """;
+
+        try (
+            Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)
+        ) {
+
+            pstmt.setString(1, word.getImagePath());
+            pstmt.setString(2, word.getWord());
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw databaseError("updating image path", e);
+        }
     }
 }

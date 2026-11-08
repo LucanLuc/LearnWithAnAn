@@ -107,16 +107,33 @@ public class VocabularyService {
 	public List<String> getReviewChoices() {
 	    return review.getCurrentChoices();
 	}
+	
 	public ReviewResult answerReview(String answer) {
-	    ReviewResult result = review.checkAnswer(answer); 
+
+	    if (review.getCurrentWord() == null ||
+	        answer == null ||
+	        answer.trim().isEmpty() ||
+	        review.hasAnsweredCurrentQuestions()) {
+
+	        return new ReviewResult(
+	                review.getCurrentWord(),
+	                false
+	        );
+	    }
+
+	    ReviewResult result = review.checkAnswer(answer);
+
 	    ReviewRecord record = new ReviewRecord(
-	    		result.getWord(), 
-	    		result.isCorrect());
-	    
+	            result.getWord(),
+	            result.isCorrect()
+	    );
+
 	    reviewHistory.addResult(record);
 	    reviewHistoryRepository.saveReview(record);
-	    return result; 
+
+	    return result;
 	}
+	
 	public int getReviewCorrect() {
 		return review.getNumOfCorrect(); 
 	}

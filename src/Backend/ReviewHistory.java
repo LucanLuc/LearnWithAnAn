@@ -1,7 +1,9 @@
 package Backend;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Collections;
 
 import model.ReviewRecord;
 
@@ -18,7 +20,7 @@ public class ReviewHistory {
     }
 
     public List<ReviewRecord> getResults() {
-        return results;
+        return Collections.unmodifiableList(results);
     }
 
     public int getTotalReviews() {
