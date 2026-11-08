@@ -81,6 +81,7 @@ public class VocabularyService {
 	public void deleteWord(Word word) {
 		dictionary.deleteWord(word);
 	}
+	
 	public Review getReview() {
 		return review; 
 	}
@@ -110,26 +111,29 @@ public class VocabularyService {
 	
 	public ReviewResult answerReview(String answer) {
 
+	    // Reject invalid submissions
 	    if (review.getCurrentWord() == null ||
 	        answer == null ||
 	        answer.trim().isEmpty() ||
 	        review.hasAnsweredCurrentQuestions()) {
 
-	        return new ReviewResult(
-	                review.getCurrentWord(),
-	                false
-	        );
+	        return new ReviewResult(review.getCurrentWord(), false);
 	    }
 
+	    // Check the user's answer
 	    ReviewResult result = review.checkAnswer(answer);
 
+	    // Create a record of this attempt
 	    ReviewRecord record = new ReviewRecord(
-	            result.getWord(),
-	            result.isCorrect()
+	        result.getWord(),
+	        result.isCorrect()
 	    );
 
-	    reviewHistory.addResult(record);
+	    // Save to database first
 	    reviewHistoryRepository.saveReview(record);
+
+	    // Only update in-memory history after database success
+	    reviewHistory.addResult(record);
 
 	    return result;
 	}
@@ -137,18 +141,23 @@ public class VocabularyService {
 	public int getReviewCorrect() {
 		return review.getNumOfCorrect(); 
 	}
+	
 	public int getReviewIncorrect() {
 		return review.getNumOfIncorrect(); 
 	}
+	
 	public int getReviewTotal() {
 		return review.getTotalQuestions(); 
 	}
+	
 	public String getReviewCorrectAnswer(Word word) {
 	    return word.getDefinition();
 	}
+	
 	public ReviewSummary getReviewSummary() {
 	    return review.getSummary();
 	}
+	
 	public Word getCurrentReviewWord() {
 	    return review.getCurrentWord();
 	}

@@ -1,152 +1,90 @@
+
 package Backend;
 
 import model.LearningState;
 
 public class ReviewPriorityService {
 
-	public double calculatePriority(
-	        WordLearningStats stats) {
+    public double calculatePriority(WordLearningStats stats) {
 
-	    /*
-	     * NEW words should be introduced quickly.
-	     */
-	    if (stats.getTotalReviews() == 0) {
-	        return 1000.0;
-	    }
+        // New words should be introduced quickly.
+        if (stats.getTotalReviews() == 0) {
+            return 1000.0;
+        }
 
-	    double priority = 0.0;
+        double priority = 0.0;
 
-	    /*
-	     * --------------------------------
-	     * 1. Learning state
-	     * --------------------------------
-	     *
-	     * We start with a base priority.
-	     */
-	    LearningState state =
-	        stats.getLearningState();
+        // 1. Learning state
+        LearningState state = stats.getLearningState();
 
-	    switch (state) {
+        switch (state) {
+            case WEAK:
+                priority += 100;
+                break;
 
-	        case WEAK:
-	            priority += 100;
-	            break;
+            case LEARNING:
+                priority += 70;
+                break;
 
-	        case LEARNING:
-	            priority += 70;
-	            break;
+            case FAMILIAR:
+                priority += 40;
+                break;
 
-	        case FAMILIAR:
-	            priority += 40;
-	            break;
+            case MASTERED:
+                priority += 10;
+                break;
 
-	        case MASTERED:
-	            priority += 10;
-	            break;
+            case NEW:
+                priority += 1000;
+                break;
+        }
 
-	        case NEW:
-	            priority += 1000;
-	            break;
-	    }
+        // 2. Overall accuracy
+        double accuracy = stats.getAccuracy();
+        priority += (100 - accuracy) * 0.5;
 
-	    /*
-	     * --------------------------------
-	     * 2. Overall accuracy
-	     * --------------------------------
-	     *
-	     * Lower accuracy = higher priority.
-	     */
-	    double accuracy =
-	        stats.getAccuracy();
+        // 3. Recent accuracy
+        double recentAccuracy = stats.getRecentAccuracy(3);
+        priority += (100 - recentAccuracy);
 
-	    priority +=
-	        (100 - accuracy);
+        // 4. Historical mistakes (limited bonus)
+        double mistakeBonus = Math.min(
+                stats.getIncorrectReviews() * 5.0,
+                30.0
+        );
 
+        priority += mistakeBonus;
 
-	    /*
-	     * --------------------------------
-	     * 3. Recent accuracy
-	     * --------------------------------
-	     *
-	     * Recent performance is important
-	     * because the learner may be improving
-	     * or getting worse.
-	     */
-	    double recentAccuracy =
-	        stats.getRecentAccuracy(3);
+        // 5. Correct streak (limited reduction)
+        int correctStreak = stats.getCorrectStreak();
 
-	    priority +=
-	        (100 - recentAccuracy) * 0.5;
+        double streakReduction = Math.min(
+                correctStreak * 5.0,
+                25.0
+        );
 
+        priority -= streakReduction;
 
-	    /*
-	     * --------------------------------
-	     * 4. Incorrect answers
-	     * --------------------------------
-	     *
-	     * Words that have repeatedly caused
-	     * problems receive extra priority.
-	     */
-	    priority +=
-	        stats.getIncorrectReviews() * 15;
+        // 6. Time since last review
+        long hoursSinceReview = stats.getHoursSinceLastReview();
 
+        if (hoursSinceReview != Long.MAX_VALUE) {
 
-	    /*
-	     * --------------------------------
-	     * 5. Correct streak
-	     * --------------------------------
-	     *
-	     * A long streak slightly reduces
-	     * the priority.
-	     */
-	    int correctStreak =
-	        stats.getCorrectStreak();
+            double timeBonus = Math.min(
+                    hoursSinceReview * 2.0,
+                    100.0
+            );
 
-	    priority -=
-	        correctStreak * 5;
+            if (state == LearningState.MASTERED) {
+                timeBonus *= 0.5;
+            } else if (state == LearningState.FAMILIAR) {
+                timeBonus *= 0.75;
+            }
 
+            priority += timeBonus;
+        }
 
-	    /*
-	     * --------------------------------
-	     * 6. Time since last review
-	     * --------------------------------
-	     */
-	    long hoursSinceReview =
-	        stats.getHoursSinceLastReview();
-
-	    if (hoursSinceReview != Long.MAX_VALUE) {
-
-	        double recencyBonus =
-	            Math.min(
-	                hoursSinceReview * 2,
-	                100
-	            );
-
-	        /*
-	         * Mastered words can wait longer.
-	         */
-	        if (state == LearningState.MASTERED) {
-
-	            recencyBonus *= 0.5;
-
-	        } else if (state == LearningState.FAMILIAR) {
-
-	            recencyBonus *= 0.75;
-	        }
-
-	        priority += recencyBonus;
-	    }
-
-
-	    /*
-	     * --------------------------------
-	     * 7. Prevent negative priority
-	     * --------------------------------
-	     */
-	    if (priority < 0) {
-	        priority = 0;
-	    }
-
-	    return priority;
-	}
+        // 7. Ensure every reviewed word has a positive weight.
+        return Math.max(priority, 1.0);
+    }
 }

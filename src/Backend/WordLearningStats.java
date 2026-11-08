@@ -39,11 +39,8 @@ public class WordLearningStats {
 	        incorrectReviews++;
 	    }
 
-	    if (lastReviewedAt == null ||
-	        record.getReviewedAt().isAfter(lastReviewedAt)) {
-
-	        lastReviewedAt =
-	            record.getReviewedAt();
+	    if (lastReviewedAt == null || (lastReviewedAt == null || record.getReviewedAt().isAfter(lastReviewedAt))) {
+	    	lastReviewedAt = record.getReviewedAt(); 
 	    }
 	}
 	
@@ -99,41 +96,45 @@ public class WordLearningStats {
 	}
 	
 	public long getHoursSinceLastReview() {
-		if (lastReviewedAt == null) {
-			return Long.MAX_VALUE; 
-		}
-		
-		return java.time.Duration.between(lastReviewedAt, java.time.LocalDateTime.now()).toHours();
-	}
-	public double getRecentAccuracy(int numberOfReviews) {
 
-	    if (reviews.isEmpty()) {
-	        return 0.0;
+	    if (lastReviewedAt == null) {
+	        return Long.MAX_VALUE;
 	    }
 
+	    return Math.max(
+	            0,
+	            java.time.Duration.between(
+	                    lastReviewedAt,
+	                    LocalDateTime.now()
+	            ).toHours()
+	    );
+	}
+	
+	public double getRecentAccuracy(int numberOfReviews) {
+	
+	    if (reviews.isEmpty() || numberOfReviews <= 0) {
+	        return 0.0;
+	    }
+	
 	    int total = 0;
 	    int correct = 0;
-
+	
 	    for (int i = reviews.size() - 1;
 	         i >= 0 && total < numberOfReviews;
 	         i--) {
-
+	
 	        ReviewRecord record = reviews.get(i);
-
+	
 	        total++;
-
+	
 	        if (record.isCorrect()) {
 	            correct++;
 	        }
 	    }
-
-	    if (total == 0) {
-	        return 0.0;
-	    }
-
+	
 	    return (double) correct / total * 100;
 	}
-	
+
 	public int getCorrectStreak() {
 
 	    int streak = 0;
