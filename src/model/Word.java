@@ -7,6 +7,7 @@ public class Word {
 	private String definition; 
 	private Character difficulty; 
 	private LocalDateTime dateAdded; 
+	private LocalDateTime nextReviewAt; 
 	
 	//stats fields
 	private int correctCount; 
@@ -21,6 +22,14 @@ public class Word {
 	
 	public void incrementWrong() {
 		wrongCount++; 
+	}
+	
+	public LocalDateTime getNextReviewAt() {
+		return nextReviewAt; 
+	}
+	
+	public void setNextReviewAt(LocalDateTime nextReviewAt) {
+		this.nextReviewAt = nextReviewAt; 
 	}
 	
 	public int getIncorrectCount() {
@@ -63,4 +72,5 @@ public class Word {
 	public void setImagePath(String imagePath) {
 		this.imagePath = imagePath; 
 	}
+
 }

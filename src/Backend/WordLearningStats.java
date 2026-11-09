@@ -39,7 +39,7 @@ public class WordLearningStats {
 	        incorrectReviews++;
 	    }
 
-	    if (lastReviewedAt == null || (lastReviewedAt == null || record.getReviewedAt().isAfter(lastReviewedAt))) {
+	    if(lastReviewedAt == null || record.getReviewedAt().isAfter(lastReviewedAt)) {
 	    	lastReviewedAt = record.getReviewedAt(); 
 	    }
 	}

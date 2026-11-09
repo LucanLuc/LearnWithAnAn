@@ -34,8 +34,8 @@ public class WordRepository implements WordRepositoryInterface {
         String sql = """
             INSERT INTO words
             (word, definition, date_added, correct_count,
-             wrong_count, image_path)
-            VALUES (?, ?, ?, ?, ?, ?)
+             wrong_count, image_path, next_review_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (
@@ -49,6 +49,13 @@ public class WordRepository implements WordRepositoryInterface {
             pstmt.setInt(4, word.getCorrectCount());
             pstmt.setInt(5, word.getIncorrectCount());
             pstmt.setString(6, word.getImagePath());
+            
+            if (word.getNextReviewAt() != null) {
+            	pstmt.setTimestamp(7, Timestamp.valueOf(word.getNextReviewAt()));
+            } else {
+            	pstmt.setTimestamp(7, null);
+      
+            }
 
             pstmt.executeUpdate();
 
@@ -65,7 +72,7 @@ public class WordRepository implements WordRepositoryInterface {
 
         String sql = """
             SELECT word, definition, date_added,
-                   correct_count, wrong_count, image_path
+                   correct_count, wrong_count, image_path, next_review_at
             FROM words
             """;
 
@@ -91,7 +98,13 @@ public class WordRepository implements WordRepositoryInterface {
                 int wrongCount = rs.getInt("wrong_count");
 
                 String imagePath = rs.getString("image_path");
-
+                
+                Timestamp nextReviewTimestamp = rs.getTimestamp("next_review_at"); 
+                
+                LocalDateTime nextReviewAt; 
+;
+				nextReviewAt = nextReviewAt = nextReviewTimestamp != null ? nextReviewTimestamp.toLocalDateTime() : null; 
+                
                 Word word = new Word(
                     wordText,
                     definition,
@@ -101,7 +114,8 @@ public class WordRepository implements WordRepositoryInterface {
                 );
 
                 word.setImagePath(imagePath);
-
+                word.setNextReviewAt(nextReviewAt);
+                
                 words.add(word);
             }
 

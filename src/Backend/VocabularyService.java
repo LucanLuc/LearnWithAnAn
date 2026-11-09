@@ -23,6 +23,7 @@ public class VocabularyService {
 	private LearningStatsService learningStatsService; 
 	private AIImageService aiImageService; 
 	private ReviewSubmissionRepository reviewSubmissionRepository; 
+	private ReviewScheduleService reviewScheduleService; 
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
@@ -33,6 +34,7 @@ public class VocabularyService {
 		reviewHistory = new ReviewHistory(); 
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
 		reviewSubmissionRepository = new ReviewSubmissionRepository(); 
+		reviewScheduleService = new ReviewScheduleService(); 
 		
 		List<ReviewRecord> savedReviews = reviewHistoryRepository.loadReviews(dictionary.getWords()); 
 	
@@ -114,6 +116,7 @@ public class VocabularyService {
 	}
 	
 
+
 	public ReviewResult answerReview(String answer) {
 	
 	    if (review.getCurrentWord() == null ||
@@ -127,22 +130,46 @@ public class VocabularyService {
 	        );
 	    }
 	
-	    // 1. Evaluate answer without modifying statistics
+	    // 1. Evaluate the answer.
 	    ReviewResult result = review.checkAnswer(answer);
 	
-	    // 2. Create review record
+	    // 2. Create a review record.
 	    ReviewRecord record = new ReviewRecord(
 	        result.getWord(),
 	        result.isCorrect()
 	    );
 	
-	    // 3. Save history and update database statistics atomically
-	    reviewSubmissionRepository.saveReviewAndUpdateStats(record);
+	    // 3. Calculate the updated learning statistics.
+	    Map<Word, WordLearningStats> stats =
+	        learningStatsService.calculateStats(
+	            dictionary.getWords(),
+	            reviewHistory
+	        );
 	
-	    // 4. Update in-memory history
+	    WordLearningStats wordStats = stats.get(result.getWord());
+	
+	    if (wordStats == null) {
+	        wordStats = new WordLearningStats(result.getWord());
+	    }
+	
+	    // Include the answer we are about to save.
+	    wordStats.addReview(record);
+	
+	    // 4. Calculate the next scheduled review date.
+	    LocalDateTime nextReviewAt =
+	        reviewScheduleService.calculateNextReviewAt(wordStats);
+	
+	    // 5. Save everything in one database transaction.
+	    reviewSubmissionRepository.saveReviewAndUpdateStats(
+	        record,
+	        nextReviewAt
+	    );
+	
+	    // 6. Update in-memory review history.
+	    result.getWord().setNextReviewAt(nextReviewAt);
 	    reviewHistory.addResult(record);
 	
-	    // 5. Update in-memory word and session statistics
+	    // 7. Update in-memory session statistics.
 	    review.recordAnswer(result);
 	
 	    return result;
