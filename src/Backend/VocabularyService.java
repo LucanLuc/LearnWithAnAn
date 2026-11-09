@@ -9,7 +9,9 @@ import model.ReviewRecord;
 import model.ReviewResult;
 import model.ReviewSummary;
 import model.Word;
-import repository.ReviewHistoryRepository; 
+import repository.ReviewHistoryRepository;
+import repository.ReviewSubmissionRepository;
+
 import java.util.concurrent.CompletableFuture; 
 import java.util.concurrent.CompletionException; 
 
@@ -20,6 +22,7 @@ public class VocabularyService {
 	private ReviewHistoryRepository reviewHistoryRepository; 
 	private LearningStatsService learningStatsService; 
 	private AIImageService aiImageService; 
+	private ReviewSubmissionRepository reviewSubmissionRepository; 
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
@@ -29,6 +32,7 @@ public class VocabularyService {
 		learningStatsService = new LearningStatsService(); 
 		reviewHistory = new ReviewHistory(); 
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
+		reviewSubmissionRepository = new ReviewSubmissionRepository(); 
 		
 		List<ReviewRecord> savedReviews = reviewHistoryRepository.loadReviews(dictionary.getWords()); 
 	
@@ -109,42 +113,41 @@ public class VocabularyService {
 	    return review.getCurrentChoices();
 	}
 	
-	public ReviewResult answerReview(String answer) {
 
+	public ReviewResult answerReview(String answer) {
+	
 	    if (review.getCurrentWord() == null ||
 	        answer == null ||
 	        answer.trim().isEmpty() ||
 	        review.hasAnsweredCurrentQuestions()) {
-
+	
 	        return new ReviewResult(
 	            review.getCurrentWord(),
 	            false
 	        );
 	    }
-
-	    // Evaluate the answer
+	
+	    // 1. Evaluate answer without modifying statistics
 	    ReviewResult result = review.checkAnswer(answer);
-
-	    // Create the review record
+	
+	    // 2. Create review record
 	    ReviewRecord record = new ReviewRecord(
 	        result.getWord(),
 	        result.isCorrect()
 	    );
-
-	    // Save review history first
-	    reviewHistoryRepository.saveReview(record);
-
-	    // Update word statistics in the database
-	    dictionary.updateReviewStats(result.getWord());
-
-	    // Update in-memory history
+	
+	    // 3. Save history and update database statistics atomically
+	    reviewSubmissionRepository.saveReviewAndUpdateStats(record);
+	
+	    // 4. Update in-memory history
 	    reviewHistory.addResult(record);
-
-	    // Update session statistics
+	
+	    // 5. Update in-memory word and session statistics
 	    review.recordAnswer(result);
-
+	
 	    return result;
 	}
+
 	
 	public int getReviewCorrect() {
 		return review.getNumOfCorrect(); 
@@ -208,19 +211,18 @@ public class VocabularyService {
 		}
 		
 		public LearningState getLearningState(Word word) {
-			LearningStatsService statsService = new LearningStatsService(); 
-			
-			Map<Word, WordLearningStats> stats = statsService.calculateStats(dictionary.getWords(), reviewHistory); 
-			
-			WordLearningStats wordStats = stats.get(word); 
-			
-			if (wordStats == null) {
-				return LearningState.NEW;
-			}
-			
-			return wordStats.getLearningState(); 
+
+		    Map<Word, WordLearningStats> stats =
+		        learningStatsService.calculateStats(dictionary.getWords(), reviewHistory);
+
+		    WordLearningStats wordStats = stats.get(word);
+
+		    if (wordStats == null) {
+		        return LearningState.NEW;
+		    }
+
+		    return wordStats.getLearningState();
 		}
-		
 		
 	public void generateImageForWord(Word word) {
 		CompletableFuture.runAsync(( )-> {

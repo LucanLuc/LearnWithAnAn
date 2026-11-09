@@ -202,14 +202,28 @@ public class Review {
     }
       
 
-	public void recordAnswer(ReviewResult result) {
-		if (result == null || result.getWord() == null) {
-    		throw new IllegalArgumentException("Review result cannot be null."); 
-    	}
-    	
-    	if (result.isCorrect()) {
-    		numOfCorrect++; 
-    		result.getWord().incrementWrong(); 
-    	}
-	}
+    public void recordAnswer(ReviewResult result) {
+
+        if (result == null || result.getWord() == null) {
+            throw new IllegalArgumentException(
+                "Review result cannot be null."
+            );
+        }
+
+        if (answered) {
+            throw new IllegalStateException(
+                "This question has already been recorded."
+            );
+        }
+
+        answered = true;
+
+        if (result.isCorrect()) {
+            numOfCorrect++;
+            result.getWord().incrementCorrect();
+        } else {
+            numOfIncorrect++;
+            result.getWord().incrementWrong();
+        }
+    }
 }
