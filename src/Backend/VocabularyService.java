@@ -111,29 +111,37 @@ public class VocabularyService {
 	
 	public ReviewResult answerReview(String answer) {
 
-	    // Reject invalid submissions
 	    if (review.getCurrentWord() == null ||
 	        answer == null ||
 	        answer.trim().isEmpty() ||
 	        review.hasAnsweredCurrentQuestions()) {
 
-	        return new ReviewResult(review.getCurrentWord(), false);
+	        return new ReviewResult(
+	            review.getCurrentWord(),
+	            false
+	        );
 	    }
 
-	    // Check the user's answer
+	    // Evaluate the answer
 	    ReviewResult result = review.checkAnswer(answer);
 
-	    // Create a record of this attempt
+	    // Create the review record
 	    ReviewRecord record = new ReviewRecord(
 	        result.getWord(),
 	        result.isCorrect()
 	    );
 
-	    // Save to database first
+	    // Save review history first
 	    reviewHistoryRepository.saveReview(record);
 
-	    // Only update in-memory history after database success
+	    // Update word statistics in the database
+	    dictionary.updateReviewStats(result.getWord());
+
+	    // Update in-memory history
 	    reviewHistory.addResult(record);
+
+	    // Update session statistics
+	    review.recordAnswer(result);
 
 	    return result;
 	}

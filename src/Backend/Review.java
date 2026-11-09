@@ -116,22 +116,11 @@ public class Review {
             return new ReviewResult(currentWord, false);
         }
 
-        answered = true;
-
         boolean correct = currentWord.getDefinition()
                 .equalsIgnoreCase(answer.trim());
 
-        if (correct) {
-            numOfCorrect++;
-            currentWord.incrementCorrect();
-        } else {
-            numOfIncorrect++;
-            currentWord.incrementWrong();
-        }
-
-        dictionary.updateReviewStats(currentWord);
-
-        return new ReviewResult(currentWord, correct);
+        answered = true; 
+        return new ReviewResult(currentWord, correct); 
     }
 
     public boolean hasAnsweredCurrentQuestions() {
@@ -211,4 +200,16 @@ public class Review {
 
         return currentWord;
     }
+      
+
+	public void recordAnswer(ReviewResult result) {
+		if (result == null || result.getWord() == null) {
+    		throw new IllegalArgumentException("Review result cannot be null."); 
+    	}
+    	
+    	if (result.isCorrect()) {
+    		numOfCorrect++; 
+    		result.getWord().incrementWrong(); 
+    	}
+	}
 }
