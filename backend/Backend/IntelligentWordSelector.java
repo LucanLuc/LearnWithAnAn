@@ -12,9 +12,9 @@ import model.Word;
 
 public class IntelligentWordSelector {
 
-    private ReviewPriorityService priorityService;
-    private ReviewScheduleService scheduleService;
-    private Random random;
+    private final ReviewPriorityService priorityService;
+    private final ReviewScheduleService scheduleService;
+    private final Random random;
 
     public IntelligentWordSelector() {
 
@@ -23,6 +23,10 @@ public class IntelligentWordSelector {
         random = new Random();
     }
 
+    /**
+     * Selects the next vocabulary word using
+     * adaptive weighted random selection.
+     */
     public Word chooseWord(
             List<Word> words,
             Map<Word, WordLearningStats> stats,
@@ -32,15 +36,17 @@ public class IntelligentWordSelector {
             return null;
         }
 
-        if (words.size() == 1) {
-            return words.get(0);
+        if (stats == null) {
+            throw new IllegalArgumentException(
+                    "Learning statistics cannot be null."
+            );
         }
 
         LocalDateTime now = LocalDateTime.now();
 
+        // STEP 1: Find all words currently due.
         List<Word> dueWords = new ArrayList<>();
 
-        // 1. Find all words that are due.
         for (Word word : words) {
 
             LocalDateTime nextReviewAt =
@@ -53,15 +59,15 @@ public class IntelligentWordSelector {
 
         List<Word> candidates;
 
+        // STEP 2: Prefer words that are due.
         if (!dueWords.isEmpty()) {
 
             candidates = dueWords;
 
         } else {
 
-            // 2. If nothing is due, select words
-            // with the earliest upcoming review date.
-
+            // If nothing is due, find the earliest
+            // upcoming review date.
             LocalDateTime earliestReview = null;
 
             for (Word word : words) {
@@ -89,12 +95,17 @@ public class IntelligentWordSelector {
             }
         }
 
-        // 3. Avoid immediately repeating the previous word.
+        // STEP 3: Avoid consecutive repetition
+        // whenever another candidate is available.
         if (candidates.size() > 1) {
             candidates.remove(previousWord);
         }
 
-        // 4. Calculate selection weights.
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        // STEP 4: Calculate selection weights.
         List<Double> weights = new ArrayList<>();
 
         double totalWeight = 0.0;
@@ -103,19 +114,15 @@ public class IntelligentWordSelector {
 
             WordLearningStats wordStats = stats.get(word);
 
-            double priority = 1.0;
-
-            if (wordStats != null) {
-                priority = priorityService.calculatePriority(
-                        wordStats
-                );
-            }
-
-            priority = Math.max(0.1, priority);
+            // Important: words without statistics
+            // are treated as new words.
+            double priority =
+                    priorityService.calculatePriority(wordStats);
 
             LocalDateTime nextReviewAt =
                     getNextReviewAt(word, stats);
 
+            // STEP 5: Increase priority for overdue words.
             double overdueBoost = 1.0;
 
             if (nextReviewAt.isBefore(now)) {
@@ -125,16 +132,21 @@ public class IntelligentWordSelector {
                         now
                 ).toDays();
 
-                overdueBoost += Math.min(overdueDays, 30) * 0.1;
+                overdueBoost +=
+                        Math.min(overdueDays, 30) * 0.1;
             }
 
+            // Final selection weight.
             double weight = priority * overdueBoost;
 
+            weight = Math.max(weight, 0.1);
+
             weights.add(weight);
+
             totalWeight += weight;
         }
 
-        // 5. Weighted random selection.
+        // STEP 6: Weighted random selection.
         double randomValue =
                 random.nextDouble() * totalWeight;
 
@@ -149,19 +161,23 @@ public class IntelligentWordSelector {
             }
         }
 
+        // Fallback for floating-point rounding.
         return candidates.get(candidates.size() - 1);
     }
 
+    /**
+     * Gets the next scheduled review date.
+     */
     private LocalDateTime getNextReviewAt(
             Word word,
             Map<Word, WordLearningStats> stats) {
 
-        // Prefer the date loaded from PostgreSQL.
+        // Use the schedule saved in PostgreSQL.
         if (word.getNextReviewAt() != null) {
             return word.getNextReviewAt();
         }
 
-        // Fallback for new words without a saved schedule.
+        // Otherwise calculate a fallback schedule.
         WordLearningStats wordStats = stats.get(word);
 
         return scheduleService.calculateNextReviewAt(wordStats);

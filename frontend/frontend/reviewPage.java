@@ -93,12 +93,26 @@ public class reviewPage {
             answerPanel.add(answerButtons[i]);
         }
 
+        JButton aiExerciseButton = new JButton("AI Exercise");
+
+        aiExerciseButton.addActionListener(e -> {
+
+            if (currentWord != null) {
+                new AIExercisePage(service, currentWord);
+            }
+        });
+        
         // STOP BUTTON
         stopButton = new JButton("Stop Review");
 
         stopButton.addActionListener(e -> {
             stopReview();
         });
+        
+        stopButton = new JButton("Stop Review");
+        JButton aiHelpButton = new JButton("AI Learning Help");
+
+        aiHelpButton.addActionListener(e -> showAILearningHelp(aiHelpButton));
 
         // ADD COMPONENTS
         panel.add(Box.createVerticalGlue());
@@ -121,7 +135,13 @@ public class reviewPage {
         panel.add(resultLabel);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        panel.add(aiExerciseButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
         panel.add(stopButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(aiHelpButton);
 
         panel.add(Box.createVerticalGlue());
 
@@ -141,7 +161,9 @@ public class reviewPage {
         loadNextQuestion();
     }
 
-    // LOAD NEXT QUESTION
+ 
+
+	// LOAD NEXT QUESTION
     private void loadNextQuestion() {
 
         currentWord = service.getNextReviewWord();
@@ -312,4 +334,82 @@ public class reviewPage {
         frame.revalidate();
         frame.repaint();
     }
+
+private void showAILearningHelp(JButton button) {
+
+    if (currentWord == null) {
+        return;
+    }
+
+    Word selectedWord = currentWord;
+
+    button.setEnabled(false);
+    button.setText("Generating AI explanation...");
+
+    resultLabel.setText("Preparing your learning guide...");
+
+    java.util.concurrent.CompletableFuture
+            .supplyAsync(() -> {
+
+                try {
+                    return service.generateStudyContent(selectedWord);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+            })
+            .whenComplete((content, error) -> {
+
+                SwingUtilities.invokeLater(() -> {
+
+                    button.setEnabled(true);
+                    button.setText("AI Learning Help");
+
+                    resultLabel.setText(" ");
+
+                    if (error != null) {
+
+                        Throwable cause = error.getCause();
+
+                        String message = cause != null
+                                ? cause.getMessage()
+                                : error.getMessage();
+
+                        JOptionPane.showMessageDialog(
+                                frame,
+                                "Could not generate AI content:\n"
+                                + message,
+                                "AI Generation Error",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+
+                        return;
+                    }
+
+                    JTextArea textArea = new JTextArea(content);
+                    textArea.setFont(
+                            new Font("Arial", Font.PLAIN, 15)
+                    );
+                    textArea.setLineWrap(true);
+                    textArea.setWrapStyleWord(true);
+                    textArea.setEditable(false);
+                    textArea.setCaretPosition(0);
+
+                    JScrollPane scrollPane =
+                            new JScrollPane(textArea);
+
+                    scrollPane.setPreferredSize(
+                            new Dimension(550, 450)
+                    );
+
+                    JOptionPane.showMessageDialog(
+                            frame,
+                            scrollPane,
+                            "AI Learning Guide: "
+                                    + selectedWord.getWord(),
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                });
+            });
+}
 }

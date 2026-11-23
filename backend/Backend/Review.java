@@ -3,13 +3,12 @@ package Backend;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import model.ReviewResult;
 import model.ReviewSummary;
-import model.Word;
-
-import java.util.Map; 
+import model.Word; 
 
 public class Review {
 
@@ -106,27 +105,23 @@ public class Review {
     }
 
     // Check user's answer
-    public ReviewResult checkAnswer(String answer) {
 
-        if (currentWord == null ||
-            answer == null ||
-            answer.trim().isEmpty() ||
-            answered) {
+	public ReviewResult checkAnswer(String answer) {
+	
+	    if (currentWord == null ||
+	        answer == null ||
+	        answer.trim().isEmpty() ||
+	        answered) {
+	
+	        return new ReviewResult(currentWord, false);
+	    }
+	
+	    boolean correct = currentWord.getDefinition()
+	            .equalsIgnoreCase(answer.trim());
+	
+	    return new ReviewResult(currentWord, correct);
+	}
 
-            return new ReviewResult(currentWord, false);
-        }
-
-        boolean correct = currentWord.getDefinition()
-                .equalsIgnoreCase(answer.trim());
-
-        answered = true; 
-        return new ReviewResult(currentWord, correct); 
-    }
-
-    public boolean hasAnsweredCurrentQuestions() {
-    	return answered; 
-    }
-    
     public void startReview() {
 
         numOfCorrect = 0;

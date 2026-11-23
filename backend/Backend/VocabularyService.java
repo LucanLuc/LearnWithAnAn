@@ -1,6 +1,7 @@
 package Backend;
 
 import java.time.LocalDateTime;
+import ai.AIStudyContentService;
 import java.util.List;
 import java.util.Map;
 import ai.AIImageService;
@@ -11,6 +12,7 @@ import model.ReviewSummary;
 import model.Word;
 import repository.ReviewHistoryRepository;
 import repository.ReviewSubmissionRepository;
+import ai.PersonalizedExerciseService;
 
 import java.util.concurrent.CompletableFuture; 
 import java.util.concurrent.CompletionException; 
@@ -22,8 +24,12 @@ public class VocabularyService {
 	private ReviewHistoryRepository reviewHistoryRepository; 
 	private LearningStatsService learningStatsService; 
 	private AIImageService aiImageService; 
+	private AIStudyContentService aiStudyContentService;
 	private ReviewSubmissionRepository reviewSubmissionRepository; 
 	private ReviewScheduleService reviewScheduleService; 
+	private PersonalizedExerciseService exerciseService;
+	private AIExerciseTracker aiExerciseTracker =
+	        new AIExerciseTracker();
 	
 	public VocabularyService() {
 		dictionary= new Dictionary(); 
@@ -32,9 +38,12 @@ public class VocabularyService {
 		aiImageService = new AIImageService(); 
 		learningStatsService = new LearningStatsService(); 
 		reviewHistory = new ReviewHistory(); 
+		aiImageService = new AIImageService();
+		aiStudyContentService = new AIStudyContentService();
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
 		reviewSubmissionRepository = new ReviewSubmissionRepository(); 
 		reviewScheduleService = new ReviewScheduleService(); 
+		exerciseService = new PersonalizedExerciseService();
 		
 		List<ReviewRecord> savedReviews = reviewHistoryRepository.loadReviews(dictionary.getWords()); 
 	
@@ -43,8 +52,29 @@ public class VocabularyService {
 		}
 	}
 	
+	public void recordAIExerciseResult(
+	        model.AIExerciseResult result) {
+
+	    aiExerciseTracker.recordResult(result);
+	}
+
+	public AIExerciseTracker getAIExerciseTracker() {
+	    return aiExerciseTracker;
+	}
+	
+	public String generatePersonalizedExercise(
+	        Word word,
+	        WordLearningStats stats) throws Exception {
+
+	    return exerciseService.generateExercise(word, stats);
+	}
+	
 	public Map<Word, WordLearningStats> getLearningStats() {
 		return learningStatsService.calculateStats(dictionary.getWords(), reviewHistory); 
+	}
+	
+	public String generateStudyContent(Word word) throws Exception {
+	    return aiStudyContentService.generateLearningContent(word);
 	}
 	
 	public void addWord(String word, String definition) {

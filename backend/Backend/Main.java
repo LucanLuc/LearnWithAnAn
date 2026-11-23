@@ -1,24 +1,27 @@
+
 package Backend;
-import java.util.*;
+
+import java.time.LocalDateTime;
 
 import model.Word;
 import repository.WordRepository;
 
-import java.time.LocalDateTime;
-
 public class Main {
-	public static void main(String[] args) {
 
-	    WordRepository repository = new WordRepository();
+    public static void main(String[] args) {
 
-	    Word word = new Word(
-	            "ephemeral",
-	            "lasting for a very short time",
-	            LocalDateTime.now()
-	    );
+        WordRepository repository = new WordRepository();
 
-	    repository.saveWord(word);
+        Word word = new Word(
+            "ephemeral",
+            "lasting for a very short time",
+            LocalDateTime.now(),
+            0,
+            0
+        );
 
-	    System.out.println("Word saved!");
-	}
+        repository.saveWord(word);
+
+        System.out.println("Word saved!");
+    }
 }

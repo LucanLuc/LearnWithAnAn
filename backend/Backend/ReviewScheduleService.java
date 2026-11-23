@@ -8,36 +8,41 @@ public class ReviewScheduleService {
     /**
      * Calculates when a word should next be reviewed.
      */
-    public LocalDateTime calculateNextReviewAt(
-            WordLearningStats stats) {
 
-        // A new word should be reviewed immediately.
-        if (stats == null || stats.getTotalReviews() == 0) {
-            return LocalDateTime.now();
-        }
-
-        // An incorrect answer resets the successful streak.
-        if (stats.getCorrectStreak() == 0) {
-            return LocalDateTime.now();
-        }
-
-        int streak = stats.getCorrectStreak();
-
-        int intervalDays;
-
-        if (streak == 1) {
-            intervalDays = 1;
-        } else if (streak == 2) {
-            intervalDays = 3;
-        } else if (streak == 3) {
-            intervalDays = 7;
-        } else {
-            intervalDays = 14;
-        }
-
-        return stats.getLastReviewedAt()
-                .plusDays(intervalDays);
-    }
+	public LocalDateTime calculateNextReviewAt(
+	        WordLearningStats stats) {
+	
+	    // New words and words without review history
+	    // should be reviewed immediately.
+	    if (stats == null || stats.getTotalReviews() == 0) {
+	        return LocalDateTime.now();
+	    }
+	
+	    // Incorrect answers reset the successful streak.
+	    if (stats.getCorrectStreak() == 0) {
+	        return LocalDateTime.now();
+	    }
+	
+	    // Protect against missing review timestamps.
+	    if (stats.getLastReviewedAt() == null) {
+	        return LocalDateTime.now();
+	    }
+	
+	    int streak = stats.getCorrectStreak();
+	    int intervalDays;
+	
+	    if (streak == 1) {
+	        intervalDays = 1;
+	    } else if (streak == 2) {
+	        intervalDays = 3;
+	    } else if (streak == 3) {
+	        intervalDays = 7;
+	    } else {
+	        intervalDays = 14;
+	    }
+	
+	    return stats.getLastReviewedAt().plusDays(intervalDays);
+	}
 
     /**
      * Checks whether a word is due for review.

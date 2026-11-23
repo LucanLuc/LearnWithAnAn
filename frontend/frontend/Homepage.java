@@ -55,6 +55,14 @@ public class Homepage {
 			frame.dispose(); 
 			System.out.println("deleteButton chosen"); 
 		}); 
+		// Learning Analytics
+		JButton analyticsBtn = new JButton("Learning Analytics");
+		Style.styleButton(analyticsBtn);
+
+		analyticsBtn.addActionListener(e -> {
+		    new analyticsPage(service);
+		    frame.dispose();
+		});
 				
 		panel.add(Box.createVerticalGlue());
 		panel.add(heading1); 
@@ -64,6 +72,7 @@ public class Homepage {
 		panel.add(reviewBtn);
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(dictionaryBtn); 
+		panel.add(analyticsBtn); 
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(Box.createVerticalGlue()); 
 		
