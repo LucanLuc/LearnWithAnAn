@@ -13,6 +13,7 @@ import model.Word;
 import repository.ReviewHistoryRepository;
 import repository.ReviewSubmissionRepository;
 import ai.PersonalizedExerciseService;
+import model.AIGeneratedWordContent;
 
 import java.util.concurrent.CompletableFuture; 
 import java.util.concurrent.CompletionException; 
@@ -38,7 +39,6 @@ public class VocabularyService {
 		aiImageService = new AIImageService(); 
 		learningStatsService = new LearningStatsService(); 
 		reviewHistory = new ReviewHistory(); 
-		aiImageService = new AIImageService();
 		aiStudyContentService = new AIStudyContentService();
 		reviewHistoryRepository = new ReviewHistoryRepository(); 
 		reviewSubmissionRepository = new ReviewSubmissionRepository(); 
@@ -62,6 +62,37 @@ public class VocabularyService {
 	    return aiExerciseTracker;
 	}
 	
+	// Generate an image preview without saving the word
+	public String generateWordImage(
+	        String word,
+	        AIGeneratedWordContent content
+	) throws Exception {
+
+	    if (word == null || word.isBlank()) {
+	        throw new IllegalArgumentException(
+	                "Word cannot be empty."
+	        );
+	    }
+
+	    if (content == null) {
+	        throw new IllegalArgumentException(
+	                "Generated content cannot be empty."
+	        );
+	    }
+
+	    // Create a temporary Word object for image generation
+	    Word temporaryWord = new Word(
+	            word.trim(),
+	            content.getSimpleExplanation(),
+	            LocalDateTime.now(),
+	            0,
+	            0
+	    );
+
+	    // Generate and save the image locally
+	    return aiImageService.generateImage(temporaryWord);
+	}
+	
 	public String generatePersonalizedExercise(
 	        Word word,
 	        WordLearningStats stats) throws Exception {
@@ -77,6 +108,19 @@ public class VocabularyService {
 	    return aiStudyContentService.generateLearningContent(word);
 	}
 	
+	// Generate translation, explanation, and example for a new word
+	public AIGeneratedWordContent generateWordDetails(String word)
+	        throws Exception {
+
+	    if (word == null || word.isBlank()) {
+	        throw new IllegalArgumentException(
+	                "Please enter a vocabulary word."
+	        );
+	    }
+
+	    return aiStudyContentService.generateVocabularyContent(word);
+	}
+	
 	public void addWord(String word, String definition) {
 
 	    Word newWord = new Word(
@@ -90,6 +134,102 @@ public class VocabularyService {
 	    dictionary.addWord(newWord);
 	    
 	    generateImageForWord(newWord); 
+	}
+	
+	
+	// Save a word after the user confirms the AI-generated content
+	// Save generated vocabulary and reuse an existing image if available
+	public void saveGeneratedWord(
+	        String word,
+	        AIGeneratedWordContent content
+	) {
+	    saveGeneratedWord(word, content, null);
+	}
+
+
+	// Save vocabulary with an optional generated image path
+	// Existing method: preserve compatibility with other parts of the app
+	public void saveGeneratedWord(
+	        String word,
+	        AIGeneratedWordContent content
+	) {
+	    saveGeneratedWord(word, content, null, true);
+	}
+
+
+	// Existing three-argument version
+	public void saveGeneratedWord(
+	        String word,
+	        AIGeneratedWordContent content,
+	        String imagePath
+	) {
+	    saveGeneratedWord(word, content, imagePath, true);
+	}
+
+
+	// Main save method
+	public void saveGeneratedWord(
+	        String word,
+	        AIGeneratedWordContent content,
+	        String imagePath,
+	        boolean generateImageIfMissing
+	) {
+
+	    if (word == null || word.isBlank()) {
+	        throw new IllegalArgumentException("Word cannot be empty.");
+	    }
+
+	    if (content == null) {
+	        throw new IllegalArgumentException("Generated content cannot be empty.");
+	    }
+
+	    String cleanWord = word.trim();
+
+	    if (dictionary.searchWord(cleanWord) != null) {
+	        throw new IllegalArgumentException(
+	                "This word already exists in your dictionary."
+	        );
+	    }
+
+	    Word newWord = new Word(
+	            cleanWord,
+	            content.getSimpleExplanation(),
+	            LocalDateTime.now(),
+	            0,
+	            0
+	    );
+
+	    newWord.setTranslation(content.getTranslation());
+	    newWord.setSimpleExplanation(content.getSimpleExplanation());
+	    newWord.setExampleSentence(content.getExampleSentence());
+
+	    if (imagePath != null && !imagePath.isBlank()) {
+	        newWord.setImagePath(imagePath);
+	    }
+
+	    dictionary.addWord(newWord);
+
+	    if (imagePath != null && !imagePath.isBlank()) {
+	        dictionary.updateImagePath(newWord);
+	    } else if (generateImageIfMissing) {
+	        generateImageForWord(newWord);
+	    }
+	}
+	// Update the saved word when its image finishes generating
+	public void updateGeneratedImage(
+	        String word,
+	        String imagePath
+	) {
+
+	    Word savedWord = dictionary.searchWord(word);
+
+	    if (savedWord != null) {
+
+	        savedWord.setImagePath(imagePath);
+
+	        dictionary.updateImagePath(savedWord);
+
+	    }
 	}
 	
 	public Word searchWord(String word) {

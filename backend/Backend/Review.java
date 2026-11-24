@@ -221,4 +221,7 @@ public class Review {
             result.getWord().incrementWrong();
         }
     }
+    public boolean hasAnsweredCurrentQuestions() {
+        return answered;
+    }
 }

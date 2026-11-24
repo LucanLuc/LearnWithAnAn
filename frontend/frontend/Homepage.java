@@ -47,7 +47,6 @@ public class Homepage {
 		}); 
 		
 		
-		
 		JButton dictionaryBtn = new JButton("My Dictionary"); 
 		Style.styleButton(dictionaryBtn);
 		dictionaryBtn.addActionListener(e-> {
@@ -55,6 +54,7 @@ public class Homepage {
 			frame.dispose(); 
 			System.out.println("deleteButton chosen"); 
 		}); 
+		
 		// Learning Analytics
 		JButton analyticsBtn = new JButton("Learning Analytics");
 		Style.styleButton(analyticsBtn);
@@ -72,6 +72,7 @@ public class Homepage {
 		panel.add(reviewBtn);
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(dictionaryBtn); 
+		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(analyticsBtn); 
 		panel.add(Box.createRigidArea(new Dimension(0,20))); 
 		panel.add(Box.createVerticalGlue()); 

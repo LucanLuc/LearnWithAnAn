@@ -3,86 +3,93 @@ package ai;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class AITextClient {
 
-    private static final String TEXT_URL =
-            "https://gen.pollinations.ai/text/";
+    private static final String OLLAMA_URL =
+            "http://localhost:11434/api/chat";
 
-    private static final String TEXT_MODEL =
-            "openai/gpt-4o-mini";
-
-    private final HttpClient httpClient;
+    private static final String MODEL = "qwen3:4b-instruct";
+    
+    private final HttpClient client;
+    private final ObjectMapper mapper;
 
     public AITextClient() {
-        httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
+        this.client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
                 .build();
+
+        this.mapper = new ObjectMapper();
     }
 
-    public String generateText(String prompt)
-            throws IOException, InterruptedException {
+    public String generateText(String prompt) throws Exception {
 
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException(
-                    "Prompt cannot be empty."
-            );
+                    "Prompt cannot be empty.");
         }
 
-        String encodedPrompt = URLEncoder.encode(
-                prompt,
-                StandardCharsets.UTF_8
-        ).replace("+", "%20");
+        // Create the JSON request body.
+        ObjectNode requestBody = mapper.createObjectNode();
 
-        String encodedModel = URLEncoder.encode(
-                TEXT_MODEL,
-                StandardCharsets.UTF_8
-        );
+        requestBody.put("model", MODEL);
 
-        String url = TEXT_URL
-                + encodedPrompt
-                + "?model=" + encodedModel;
+        ObjectNode message = mapper.createObjectNode();
+        message.put("role", "user");
+        message.put("content", prompt);
+
+        requestBody.putArray("messages").add(message);
+
+        // Disable streaming so we receive one complete response.
+        requestBody.put("stream", false);
+
+        // Disable thinking output to keep responses concise.
+     // Disable thinking output to keep responses concise.
+     // Disable thinking output.
+        requestBody.put("think", false);
+
+        String jsonBody = mapper.writeValueAsString(requestBody);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofSeconds(90))
-                .header(
-                        "Authorization",
-                        "Bearer " + AIConfig.getApiKey()
-                )
-                .header("Accept", "text/plain")
-                .GET()
+                .uri(URI.create(OLLAMA_URL))
+                .header("Content-Type", "application/json")
+                .timeout(Duration.ofMinutes(10))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(
+        HttpResponse<String> response = client.send(
                 request,
-                HttpResponse.BodyHandlers.ofString(
-                        StandardCharsets.UTF_8
-                )
-        );
+                HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new IOException(
-                    "AI text generation failed. HTTP "
+                    "Ollama request failed. HTTP status: "
                     + response.statusCode()
-                    + ": " + response.body()
-            );
+                    + "\nResponse: " + response.body());
         }
 
-        String generatedText = response.body().trim();
+        // Parse Ollama's JSON response.
+        JsonNode root = mapper.readTree(response.body());
+        
+        System.out.println("OLLAMA RAW RESPONSE:");
+        System.out.println(response.body());
 
-        if (generatedText.isEmpty()) {
+        JsonNode contentNode = root.path("message").path("content");
+
+        if (contentNode.isMissingNode()
+                || contentNode.asText().isBlank()) {
             throw new IOException(
-                    "The AI returned an empty response."
-            );
+                    "Ollama returned an empty response.");
         }
 
-        return generatedText;
+        return contentNode.asText().trim();
     }
 }

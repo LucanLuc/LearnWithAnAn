@@ -16,26 +16,26 @@ import exception.DatabaseOperationException;
 
 public class WordRepository implements WordRepositoryInterface {
 
-    // Convert SQL errors into application-level exceptions
     private DatabaseOperationException databaseError(
-        String operation,
-        SQLException e
-    ) {
+            String operation,
+            SQLException e) {
+
         return new DatabaseOperationException(
-            "Database operation failed: " + operation,
-            e
+                "Database operation failed: " + operation,
+                e
         );
     }
 
-    // Save ONE word to PostgreSQL
+    // Save one word
     @Override
     public void saveWord(Word word) {
 
         String sql = """
             INSERT INTO words
             (word, definition, date_added, correct_count,
-             wrong_count, image_path, next_review_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+             wrong_count, image_path, next_review_at,
+             translation, simple_explanation, example_sentence)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (
@@ -49,13 +49,19 @@ public class WordRepository implements WordRepositoryInterface {
             pstmt.setInt(4, word.getCorrectCount());
             pstmt.setInt(5, word.getIncorrectCount());
             pstmt.setString(6, word.getImagePath());
-            
+
             if (word.getNextReviewAt() != null) {
-            	pstmt.setTimestamp(7, Timestamp.valueOf(word.getNextReviewAt()));
+                pstmt.setTimestamp(
+                        7,
+                        Timestamp.valueOf(word.getNextReviewAt())
+                );
             } else {
-            	pstmt.setTimestamp(7, null);
-      
+                pstmt.setTimestamp(7, null);
             }
+
+            pstmt.setString(8, word.getTranslation());
+            pstmt.setString(9, word.getSimpleExplanation());
+            pstmt.setString(10, word.getExampleSentence());
 
             pstmt.executeUpdate();
 
@@ -64,7 +70,7 @@ public class WordRepository implements WordRepositoryInterface {
         }
     }
 
-    // Load ALL words from PostgreSQL
+    // Load all words
     @Override
     public List<Word> loadWords() {
 
@@ -72,7 +78,10 @@ public class WordRepository implements WordRepositoryInterface {
 
         String sql = """
             SELECT word, definition, date_added,
-                   correct_count, wrong_count, image_path, next_review_at
+                   correct_count, wrong_count,
+                   image_path, next_review_at,
+                   translation, simple_explanation,
+                   example_sentence
             FROM words
             """;
 
@@ -90,32 +99,46 @@ public class WordRepository implements WordRepositoryInterface {
                 Timestamp timestamp = rs.getTimestamp("date_added");
 
                 LocalDateTime dateAdded =
-                    timestamp != null
-                    ? timestamp.toLocalDateTime()
-                    : null;
+                        timestamp != null
+                        ? timestamp.toLocalDateTime()
+                        : null;
 
                 int correctCount = rs.getInt("correct_count");
                 int wrongCount = rs.getInt("wrong_count");
 
                 String imagePath = rs.getString("image_path");
-                
-                Timestamp nextReviewTimestamp = rs.getTimestamp("next_review_at"); 
-                
-                LocalDateTime nextReviewAt; 
-;
-				nextReviewAt = nextReviewAt = nextReviewTimestamp != null ? nextReviewTimestamp.toLocalDateTime() : null; 
-                
+
+                Timestamp nextReviewTimestamp =
+                        rs.getTimestamp("next_review_at");
+
+                LocalDateTime nextReviewAt =
+                        nextReviewTimestamp != null
+                        ? nextReviewTimestamp.toLocalDateTime()
+                        : null;
+
                 Word word = new Word(
-                    wordText,
-                    definition,
-                    dateAdded,
-                    correctCount,
-                    wrongCount
+                        wordText,
+                        definition,
+                        dateAdded,
+                        correctCount,
+                        wrongCount
                 );
 
                 word.setImagePath(imagePath);
                 word.setNextReviewAt(nextReviewAt);
-                
+
+                word.setTranslation(
+                        rs.getString("translation")
+                );
+
+                word.setSimpleExplanation(
+                        rs.getString("simple_explanation")
+                );
+
+                word.setExampleSentence(
+                        rs.getString("example_sentence")
+                );
+
                 words.add(word);
             }
 
@@ -154,7 +177,12 @@ public class WordRepository implements WordRepositoryInterface {
 
         String sql = """
             UPDATE words
-            SET word = ?, definition = ?, image_path = ?
+            SET word = ?,
+                definition = ?,
+                image_path = ?,
+                translation = ?,
+                simple_explanation = ?,
+                example_sentence = ?
             WHERE word = ?
             """;
 
@@ -166,7 +194,10 @@ public class WordRepository implements WordRepositoryInterface {
             pstmt.setString(1, word.getWord());
             pstmt.setString(2, word.getDefinition());
             pstmt.setString(3, word.getImagePath());
-            pstmt.setString(4, oldWord);
+            pstmt.setString(4, word.getTranslation());
+            pstmt.setString(5, word.getSimpleExplanation());
+            pstmt.setString(6, word.getExampleSentence());
+            pstmt.setString(7, oldWord);
 
             pstmt.executeUpdate();
 
